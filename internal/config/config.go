@@ -4,8 +4,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"unicode"
 
+	"github.com/Evan-acg/GitConventionalCommits/internal/strutil"
 	"gopkg.in/yaml.v3"
 )
 
@@ -19,8 +19,11 @@ type lazyGitConfig struct {
 	Scopes []typeScopeItem `yaml:"scope"`
 }
 
-func Load(skillPath string) (types, scopes []string) {
-	if data, err := os.ReadFile(".lazygit.yaml"); err == nil {
+func Load(skillPath, lazygitPath string) (types, scopes []string) {
+	if lazygitPath == "" {
+		lazygitPath = ".lazygit.yaml"
+	}
+	if data, err := os.ReadFile(lazygitPath); err == nil {
 		var cfg lazyGitConfig
 		if err := yaml.Unmarshal(data, &cfg); err == nil && len(cfg.Types) > 0 {
 			for _, t := range cfg.Types {
@@ -40,9 +43,7 @@ func Load(skillPath string) (types, scopes []string) {
 			for _, m := range matches {
 				name := strings.TrimSpace(m[1])
 				if name != "" {
-					runes := []rune(name)
-					runes[0] = unicode.ToUpper(runes[0])
-					types = append(types, string(runes))
+					types = append(types, strutil.Capitalize(name))
 				}
 			}
 			if len(types) > 0 {

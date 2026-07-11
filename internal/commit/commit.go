@@ -5,45 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
-	"unicode"
 )
-
-var msgRe = regexp.MustCompile(`^(\w+)(\((\w+)\))?:\s*(.*)$`)
-
-func capitalize(s string) string {
-	if s == "" {
-		return ""
-	}
-	runes := []rune(s)
-	runes[0] = unicode.ToUpper(runes[0])
-	return string(runes)
-}
-
-func Capitalize(msg string) string {
-	m := msgRe.FindStringSubmatch(strings.TrimSpace(msg))
-	if m == nil {
-		return msg
-	}
-	typeName := capitalize(m[1])
-	desc := m[4]
-	if m[2] != "" {
-		scope := capitalize(m[3])
-		return fmt.Sprintf("%s(%s): %s", typeName, scope, desc)
-	}
-	return fmt.Sprintf("%s: %s", typeName, desc)
-}
-
-func Execute(msg string) error {
-	if err := exec.Command("git", "add", "-A").Run(); err != nil {
-		return fmt.Errorf("git add 失败: %w", err)
-	}
-	cmd := exec.Command("git", "commit", "-m", msg)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
 
 func Confirm(msg string) bool {
 	fmt.Println("\n生成的提交消息:")
@@ -53,4 +16,15 @@ func Confirm(msg string) bool {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	return strings.TrimSpace(scanner.Text()) == "ok"
+}
+
+func Stage() error {
+	return exec.Command("git", "add", "-A").Run()
+}
+
+func Commit(msg string) error {
+	cmd := exec.Command("git", "commit", "-m", msg)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }

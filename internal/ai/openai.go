@@ -2,10 +2,10 @@ package ai
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -25,24 +25,19 @@ type chatResponse struct {
 	} `json:"choices"`
 }
 
-func Generate(types, scopes []string, diff string, apiKey string, rgContext string) (string, error) {
-	if apiKey == "" {
-		apiKey = os.Getenv("MESSAGE_API_KEY")
-	}
-	if apiKey == "" {
-		return "", fmt.Errorf("MESSAGE_API_KEY 未设置，可通过 --api-key 参数或 MESSAGE_API_KEY 环境变量设置")
-	}
+type OpenAI struct {
+	APIKey  string
+	Model   string
+	BaseURL string
+	Client  *http.Client
+}
 
-	model := os.Getenv("OPENAI_MODEL")
-	if model == "" {
-		model = "gpt-4o-mini"
-	}
-
+func (o *OpenAI) Generate(ctx context.Context, req Request) (string, error) {
 	var typeList, scopeList string
-	for _, t := range types {
+	for _, t := range req.Types {
 		typeList += fmt.Sprintf("- %s\n", t)
 	}
-	for _, s := range scopes {
+	for _, s := range req.Scopes {
 		scopeList += fmt.Sprintf("- %s\n", s)
 	}
 
@@ -62,29 +57,33 @@ func Generate(types, scopes []string, diff string, apiKey string, rgContext stri
 - 消息用中文描述变更内容
 - 只返回一行消息，不要额外说明`, typeList, scopeList)
 
-	userContent := fmt.Sprintf("请根据以下 diff 生成 commit 消息:\n\n%s", diff)
-	if rgContext != "" {
-		userContent += fmt.Sprintf("\n---\n变更文件结构上下文:\n%s", rgContext)
+	userContent := "请根据以下 diff 生成 commit 消息:\n\n" + req.Diff
+	if req.ExtraContext != "" {
+		userContent += "\n---\n变更上下文:\n" + req.ExtraContext
 	}
 
-	reqBody := chatRequest{
-		Model: model,
+	body, _ := json.Marshal(chatRequest{
+		Model: o.Model,
 		Messages: []chatMessage{
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: userContent},
 		},
-	}
+	})
 
-	body, _ := json.Marshal(reqBody)
-
-	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewReader(body))
+	url := strings.TrimSuffix(o.BaseURL, "/") + "/v1/chat/completions"
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
 	if err != nil {
 		return "", fmt.Errorf("创建请求失败: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+apiKey)
-	req.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+o.APIKey)
+	httpReq.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	client := o.Client
+	if client == nil {
+		client = http.DefaultClient
+	}
+
+	resp, err := client.Do(httpReq)
 	if err != nil {
 		return "", fmt.Errorf("API 请求失败: %w", err)
 	}

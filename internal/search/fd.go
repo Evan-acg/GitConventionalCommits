@@ -8,31 +8,9 @@ import (
 	"strings"
 )
 
-var defaultPattern = "^(func|function|def|class|type|struct|interface|impl|fn|pub|export|const|let|var|module|trait|enum)\\b"
+const maxContextLines = 500
 
-func Context(files []string, pattern string) string {
-	if _, err := exec.LookPath("rg"); err != nil {
-		fmt.Fprintln(os.Stderr, "建议安装 ripgrep (rg) 以获得更精准的 commit 消息")
-		return ""
-	}
-	if len(files) == 0 {
-		return ""
-	}
-	if pattern == "" {
-		pattern = defaultPattern
-	}
-
-	args := []string{"--line-number", "-e", pattern}
-	args = append(args, files...)
-
-	out, err := exec.Command("rg", args...).Output()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(out))
-}
-
-func RelatedFiles(changedFiles []string, pattern string) string {
+func FDContext(changedFiles []string, pattern string) string {
 	if _, err := exec.LookPath("fd"); err != nil {
 		fmt.Fprintln(os.Stderr, "建议安装 fd (fd-find) 以获得更精准的 commit 消息")
 		return ""
@@ -96,5 +74,10 @@ func RelatedFiles(changedFiles []string, pattern string) string {
 		sections = append(sections, fmt.Sprintf("%s/ 目录文件:\n%s", dir, strings.Join(dirFiles, "\n")))
 	}
 
-	return strings.Join(sections, "\n")
+	result := strings.Join(sections, "\n")
+	if lines := strings.Split(result, "\n"); len(lines) > maxContextLines {
+		lines = lines[:maxContextLines]
+		result = strings.Join(lines, "\n") + "\n... (已截断)"
+	}
+	return result
 }
