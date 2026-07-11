@@ -1,10 +1,10 @@
-package main
+package git
 
 import (
 	"os/exec"
 )
 
-func getGitDiff() (string, error) {
+func Diff() (string, error) {
 	out, err := exec.Command("git", "diff").Output()
 	if err != nil {
 		return "", err

@@ -1,4 +1,4 @@
-package main
+package ai
 
 import (
 	"bytes"
@@ -25,7 +25,7 @@ type chatResponse struct {
 	} `json:"choices"`
 }
 
-func generateMessage(types, scopes []string, diff string, apiKey string) (string, error) {
+func Generate(types, scopes []string, diff string, apiKey string) (string, error) {
 	if apiKey == "" {
 		apiKey = os.Getenv("MESSAGE_API_KEY")
 	}

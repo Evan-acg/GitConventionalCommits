@@ -1,4 +1,4 @@
-package main
+package commit
 
 import (
 	"bufio"
@@ -10,7 +10,7 @@ import (
 	"unicode"
 )
 
-var commitMsgRe = regexp.MustCompile(`^(\w+)(\((\w+)\))?:\s*(.*)$`)
+var msgRe = regexp.MustCompile(`^(\w+)(\((\w+)\))?:\s*(.*)$`)
 
 func capitalize(s string) string {
 	if s == "" {
@@ -21,8 +21,8 @@ func capitalize(s string) string {
 	return string(runes)
 }
 
-func enforceCapitalization(msg string) string {
-	m := commitMsgRe.FindStringSubmatch(strings.TrimSpace(msg))
+func Capitalize(msg string) string {
+	m := msgRe.FindStringSubmatch(strings.TrimSpace(msg))
 	if m == nil {
 		return msg
 	}
@@ -35,7 +35,7 @@ func enforceCapitalization(msg string) string {
 	return fmt.Sprintf("%s: %s", typeName, desc)
 }
 
-func executeCommit(msg string) error {
+func Execute(msg string) error {
 	if err := exec.Command("git", "add", "-A").Run(); err != nil {
 		return fmt.Errorf("git add 失败: %w", err)
 	}
@@ -45,7 +45,7 @@ func executeCommit(msg string) error {
 	return cmd.Run()
 }
 
-func confirmCommit(msg string) bool {
+func Confirm(msg string) bool {
 	fmt.Println("\n生成的提交消息:")
 	fmt.Println(msg)
 	fmt.Print("\n确认提交？回复 ok 执行: ")

@@ -4,6 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/Evan-acg/GitConventionalCommits/internal/ai"
+	"github.com/Evan-acg/GitConventionalCommits/internal/commit"
+	"github.com/Evan-acg/GitConventionalCommits/internal/config"
+	"github.com/Evan-acg/GitConventionalCommits/internal/git"
 )
 
 func main() {
@@ -15,9 +20,9 @@ func main() {
 		*skillPath = v
 	}
 
-	typeList, scopeList := loadConfig(*skillPath)
+	typeList, scopeList := config.Load(*skillPath)
 
-	diff, err := getGitDiff()
+	diff, err := git.Diff()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "获取 diff 失败: %v\n", err)
 		os.Exit(1)
@@ -27,16 +32,16 @@ func main() {
 		return
 	}
 
-	msg, err := generateMessage(typeList, scopeList, diff, *apiKey)
+	msg, err := ai.Generate(typeList, scopeList, diff, *apiKey)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "AI 生成消息失败: %v\n", err)
 		os.Exit(1)
 	}
 
-	msg = enforceCapitalization(msg)
+	msg = commit.Capitalize(msg)
 
-	if confirmCommit(msg) {
-		if err := executeCommit(msg); err != nil {
+	if commit.Confirm(msg) {
+		if err := commit.Execute(msg); err != nil {
 			fmt.Fprintf(os.Stderr, "提交失败: %v\n", err)
 			os.Exit(1)
 		}
