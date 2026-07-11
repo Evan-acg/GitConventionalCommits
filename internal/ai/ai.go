@@ -25,7 +25,7 @@ type chatResponse struct {
 	} `json:"choices"`
 }
 
-func Generate(types, scopes []string, diff string, apiKey string) (string, error) {
+func Generate(types, scopes []string, diff string, apiKey string, rgContext string) (string, error) {
 	if apiKey == "" {
 		apiKey = os.Getenv("MESSAGE_API_KEY")
 	}
@@ -62,11 +62,16 @@ func Generate(types, scopes []string, diff string, apiKey string) (string, error
 - 消息用中文描述变更内容
 - 只返回一行消息，不要额外说明`, typeList, scopeList)
 
+	userContent := fmt.Sprintf("请根据以下 diff 生成 commit 消息:\n\n%s", diff)
+	if rgContext != "" {
+		userContent += fmt.Sprintf("\n---\n变更文件结构上下文:\n%s", rgContext)
+	}
+
 	reqBody := chatRequest{
 		Model: model,
 		Messages: []chatMessage{
 			{Role: "system", Content: systemPrompt},
-			{Role: "user", Content: fmt.Sprintf("请根据以下 diff 生成 commit 消息:\n\n%s", diff)},
+			{Role: "user", Content: userContent},
 		},
 	}
 

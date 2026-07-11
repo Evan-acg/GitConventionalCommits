@@ -9,11 +9,13 @@ import (
 	"github.com/Evan-acg/GitConventionalCommits/internal/commit"
 	"github.com/Evan-acg/GitConventionalCommits/internal/config"
 	"github.com/Evan-acg/GitConventionalCommits/internal/git"
+	"github.com/Evan-acg/GitConventionalCommits/internal/search"
 )
 
 func main() {
 	skillPath := flag.String("skill-path", "", "path to git-commit SKILL.md")
 	apiKey := flag.String("api-key", "", "API key（优先级高于 MESSAGE_API_KEY 环境变量）")
+	rgPattern := flag.String("rg-pattern", "", "rg 搜索模式，不指定则自动检测代码结构")
 	flag.Parse()
 
 	if v := os.Getenv("GIT_COMMIT_SKILL_PATH"); v != "" && *skillPath == "" {
@@ -32,7 +34,10 @@ func main() {
 		return
 	}
 
-	msg, err := ai.Generate(typeList, scopeList, diff, *apiKey)
+	changedFiles, _ := git.ChangedFiles()
+	rgContext := search.Context(changedFiles, *rgPattern)
+
+	msg, err := ai.Generate(typeList, scopeList, diff, *apiKey, rgContext)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "AI 生成消息失败: %v\n", err)
 		os.Exit(1)
