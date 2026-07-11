@@ -1,2 +1,2 @@
 @echo off
-go build -o build\ .
+go build -o build\agc.exe .

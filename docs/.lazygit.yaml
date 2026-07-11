@@ -1,0 +1,48 @@
+type:
+  - name: Feat
+    docs: 新特性
+  - name: Fix
+    docs: 修补校验
+  - name: Docs
+    docs: 文档变更
+  - name: Style
+    docs: 代码格式(不影响代码运行的变动)
+  - name: Refactor
+    docs: 重构(既不是新增核心点也不是修改bug的程序变动)
+  - name: Perf
+    docs: 性能优化
+  - name: Test
+    docs: 增加测试
+  - name: Chore
+    docs: 构建过程或辅助工具的变动
+  - name: Revert
+    docs: 回滚
+  - name: CI
+    docs: 持续集成相关
+  - name: WIP
+    docs: 未完成暂时保存
+  - name: Revise 
+    docs: 重构(文本写作变动)
+scope:
+  - name: Scripts
+    docs: 脚本文件相关
+  - name: Asserts
+    docs: 资源（图片、地图、专用引用文献等）
+  - name: Drafts
+    docs: 草稿
+  - name: Researches
+    docs: 资料调查结果
+  - name: Notes
+    docs: 笔记
+  - name: Refs
+    docs: 通用引用文献
+  - name: Worlds
+    docs: 设定集
+  - name: Characters
+    docs: 角色档案
+  - name: Outlines
+    docs: 大纲、细纲
+  - name: Chapters
+    docs: 章节
+  - name: Other
+    docs: 其它
