@@ -8,6 +8,7 @@ import (
 
 func main() {
 	skillPath := flag.String("skill-path", "", "path to git-commit SKILL.md")
+	apiKey := flag.String("api-key", "", "API key（优先级高于 MESSAGE_API_KEY 环境变量）")
 	flag.Parse()
 
 	if v := os.Getenv("GIT_COMMIT_SKILL_PATH"); v != "" && *skillPath == "" {
@@ -26,7 +27,7 @@ func main() {
 		return
 	}
 
-	msg, err := generateMessage(typeList, scopeList, diff)
+	msg, err := generateMessage(typeList, scopeList, diff, *apiKey)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "AI 生成消息失败: %v\n", err)
 		os.Exit(1)

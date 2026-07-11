@@ -25,10 +25,12 @@ type chatResponse struct {
 	} `json:"choices"`
 }
 
-func generateMessage(types, scopes []string, diff string) (string, error) {
-	apiKey := os.Getenv("OPENAI_API_KEY")
+func generateMessage(types, scopes []string, diff string, apiKey string) (string, error) {
 	if apiKey == "" {
-		return "", fmt.Errorf("OPENAI_API_KEY 未设置")
+		apiKey = os.Getenv("MESSAGE_API_KEY")
+	}
+	if apiKey == "" {
+		return "", fmt.Errorf("MESSAGE_API_KEY 未设置，可通过 --api-key 参数或 MESSAGE_API_KEY 环境变量设置")
 	}
 
 	model := os.Getenv("OPENAI_MODEL")
