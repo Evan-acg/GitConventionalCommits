@@ -21,3 +21,27 @@ func ChangedFiles() ([]string, error) {
 	files := strings.Fields(string(out))
 	return files, nil
 }
+
+func StatusShort() (string, error) {
+	out, err := exec.Command("git", "status", "--short").Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
+func DiffStat() (string, error) {
+	out, err := exec.Command("git", "diff", "--stat").Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
+func DiffCachedStat() (string, error) {
+	out, err := exec.Command("git", "diff", "--cached", "--stat").Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}

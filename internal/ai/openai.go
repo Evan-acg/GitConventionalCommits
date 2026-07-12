@@ -23,6 +23,10 @@ type chatResponse struct {
 	Choices []struct {
 		Message chatMessage `json:"message"`
 	} `json:"choices"`
+	Error *struct {
+		Message string `json:"message"`
+		Type    string `json:"type"`
+	} `json:"error"`
 }
 
 type OpenAI struct {
@@ -42,9 +46,7 @@ func (o *OpenAI) Generate(ctx context.Context, req Request) (string, error) {
 	}
 
 	systemPrompt := fmt.Sprintf(
-		`你是一个 git commit 消息生成助手。根据 git diff 和可用的 type/scope 分类，生成一条 conventional commit 消息。
-
-格式: Type(Scope): 中文消息
+		`你是一个 git commit 消息生成助手。根据以下 git 信息和可用的 type/scope 分类，生成 conventional commit 消息。
 
 可用的 Type:
 %s
@@ -52,14 +54,31 @@ func (o *OpenAI) Generate(ctx context.Context, req Request) (string, error) {
 可用的 Scope:
 %s
 
+输出格式: 始终返回 JSON 数组，每个元素包含以下字段:
+- type: 变更类型 (从可用 Type 中选择)
+- scope: 变更范围 (从可用 Scope 中选择)
+- message: 中文描述 (一句话概括变更内容)
+- files: 该 commit 涉及的文件路径数组 (需要 git add 的文件)
+- detail: 变更的详细描述 (markdown 列表格式，以 - 开头列出每个具体变更)
+
 规则:
 - 根据 diff 内容选择最匹配的 Type 和 Scope
 - 消息用中文描述变更内容
-- 只返回一行消息，不要额外说明`, typeList, scopeList)
+- 分析 diff 内容判断是否需要分多条 commit
+- 如果 diff 包含多个独立不相关的变更，为每组独立变更输出一条 commit
+- 如果所有变更是相关的、完成单一目标，只输出一条
+- 只返回 JSON 数组，不要额外说明
 
-	userContent := "请根据以下 diff 生成 commit 消息:\n\n" + req.Diff
+示例输出:
+[{"type": "Feat", "scope": "Git", "message": "添加新的 git 函数", "files": ["internal/git/git.go"], "detail": "- 新增 StatusShort 函数\n- 新增 DiffStat 函数"}]`, typeList, scopeList)
+
+	userContent := "请根据以下 git 信息生成 commit 消息:\n\n"
+	if req.GitInfo != "" {
+		userContent += "--- 工作区状态 ---\n" + req.GitInfo + "\n\n"
+	}
+	userContent += "--- 完整 diff ---\n" + req.Diff
 	if req.ExtraContext != "" {
-		userContent += "\n---\n变更上下文:\n" + req.ExtraContext
+		userContent += "\n\n--- 变更上下文 ---\n" + req.ExtraContext
 	}
 
 	body, _ := json.Marshal(chatRequest{
@@ -95,7 +114,10 @@ func (o *OpenAI) Generate(ctx context.Context, req Request) (string, error) {
 	}
 
 	if len(chatResp.Choices) == 0 {
-		return "", fmt.Errorf("API 返回空结果")
+		if chatResp.Error != nil {
+			return "", fmt.Errorf("API 返回错误: %s (%s)", chatResp.Error.Message, chatResp.Error.Type)
+		}
+		return "", fmt.Errorf("API 返回空结果（无错误信息）")
 	}
 
 	return strings.TrimSpace(chatResp.Choices[0].Message.Content), nil

@@ -6,6 +6,7 @@ type Request struct {
 	Types        []string
 	Scopes       []string
 	Diff         string
+	GitInfo      string
 	ExtraContext string
 }
 
