@@ -11,6 +11,7 @@ import (
 	"github.com/Evan-acg/GitConventionalCommits/internal/config"
 	"github.com/Evan-acg/GitConventionalCommits/internal/git"
 	"github.com/Evan-acg/GitConventionalCommits/internal/search"
+	"github.com/Evan-acg/GitConventionalCommits/internal/spinner"
 	"github.com/Evan-acg/GitConventionalCommits/internal/strutil"
 )
 
@@ -27,23 +28,39 @@ type Workflow struct{}
 func (Workflow) Run(ctx context.Context, opts Options) error {
 	typeList, scopeList := config.Load(opts.SkillPath, opts.LazyGitPath)
 
-	diff, err := git.Diff()
-	if err != nil {
-		return fmt.Errorf("获取 diff 失败: %w", err)
+	var (
+		diff           string
+		changedFiles   []string
+		statusShort    string
+		diffStat       string
+		diffCachedStat string
+	)
+
+	if err := spinner.Run("正在获取 git 变更信息", func() error {
+		d, err := git.Diff()
+		if err != nil {
+			return err
+		}
+		diff = d
+
+		cf, err := git.ChangedFiles()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "警告: 获取变更文件列表失败: %v\n", err)
+		}
+		changedFiles = cf
+
+		statusShort, _ = git.StatusShort()
+		diffStat, _ = git.DiffStat()
+		diffCachedStat, _ = git.DiffCachedStat()
+		return nil
+	}); err != nil {
+		return fmt.Errorf("获取 git 信息失败: %w", err)
 	}
+
 	if diff == "" {
 		fmt.Println("没有未暂存的变更")
 		return nil
 	}
-
-	changedFiles, err := git.ChangedFiles()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "警告: 获取变更文件列表失败: %v\n", err)
-	}
-
-	statusShort, _ := git.StatusShort()
-	diffStat, _ := git.DiffStat()
-	diffCachedStat, _ := git.DiffCachedStat()
 
 	var gitInfo strings.Builder
 	if statusShort != "" {
@@ -84,14 +101,21 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 		BaseURL: baseURL,
 	}
 
-	raw, err := llm.Generate(ctx, ai.Request{
-		Types:        typeList,
-		Scopes:       scopeList,
-		Diff:         diff,
-		GitInfo:      gitInfo.String(),
-		ExtraContext: extraContext,
-	})
-	if err != nil {
+	var raw string
+	if err := spinner.Run("正在调用 AI 生成 commit 消息", func() error {
+		r, err := llm.Generate(ctx, ai.Request{
+			Types:        typeList,
+			Scopes:       scopeList,
+			Diff:         diff,
+			GitInfo:      gitInfo.String(),
+			ExtraContext: extraContext,
+		})
+		if err != nil {
+			return err
+		}
+		raw = r
+		return nil
+	}); err != nil {
 		return fmt.Errorf("AI 生成消息失败: %w", err)
 	}
 
