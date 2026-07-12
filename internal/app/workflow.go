@@ -34,6 +34,7 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 		statusShort    string
 		diffStat       string
 		diffCachedStat string
+		untrackedFiles []string
 	)
 
 	if err := spinner.Run("正在获取 git 变更信息", func() error {
@@ -52,12 +53,15 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 		statusShort, _ = git.StatusShort()
 		diffStat, _ = git.DiffStat()
 		diffCachedStat, _ = git.DiffCachedStat()
+
+		uf, _ := git.LsUntracked()
+		untrackedFiles = uf
 		return nil
 	}); err != nil {
 		return fmt.Errorf("获取 git 信息失败: %w", err)
 	}
 
-	if diff == "" {
+	if diff == "" && len(untrackedFiles) == 0 {
 		fmt.Println("没有未暂存的变更")
 		return nil
 	}
@@ -71,6 +75,12 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 	}
 	if diffStat != "" {
 		gitInfo.WriteString("--- 未暂存变更摘要 ---\n" + diffStat + "\n")
+	}
+	if len(untrackedFiles) > 0 {
+		untrackedContent := git.UntrackedContent(untrackedFiles)
+		if untrackedContent != "" {
+			gitInfo.WriteString("--- 未跟踪文件内容 ---\n" + untrackedContent + "\n")
+		}
 	}
 
 	rgContext := search.RGContext(changedFiles, opts.RGPattern)
@@ -119,7 +129,23 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 		return fmt.Errorf("AI 生成消息失败: %w", err)
 	}
 
-	entries := commit.ParseEntries(raw)
+	entries, reason := commit.ParseEntries(raw)
+	if len(entries) == 0 {
+		return fmt.Errorf("AI 未生成有效 commit 消息")
+	}
+	if reason != "" {
+		fmt.Println("\n" + reason)
+	}
+
+	var valid []commit.Entry
+	for _, e := range entries {
+		if e.Type == "" || e.Scope == "" || e.Message == "" {
+			fmt.Fprintf(os.Stderr, "警告: AI 返回的 entry 缺少必要字段，已跳过\n")
+			continue
+		}
+		valid = append(valid, e)
+	}
+	entries = valid
 	if len(entries) == 0 {
 		return fmt.Errorf("AI 未生成有效 commit 消息")
 	}

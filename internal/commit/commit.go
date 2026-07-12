@@ -17,6 +17,11 @@ type Entry struct {
 	Detail  string   `json:"detail,omitempty"`
 }
 
+type AIResponse struct {
+	Reason string  `json:"reason"`
+	Data   []Entry `json:"data"`
+}
+
 func ConfirmEntry(entry Entry) bool {
 	msg := FormatMessage(entry)
 	fmt.Println("\n生成的提交消息:")
@@ -63,16 +68,16 @@ func Commit(msg string) error {
 	return cmd.Run()
 }
 
-func ParseEntries(raw string) []Entry {
+func ParseEntries(raw string) ([]Entry, string) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
-		return nil
+		return nil, ""
 	}
 
-	var entries []Entry
-	if err := json.Unmarshal([]byte(raw), &entries); err == nil {
-		return entries
+	var resp AIResponse
+	if err := json.Unmarshal([]byte(raw), &resp); err != nil {
+		return nil, ""
 	}
 
-	return nil
+	return resp.Data, resp.Reason
 }
