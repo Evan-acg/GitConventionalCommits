@@ -1,0 +1,12 @@
+type:
+  - name: Feat
+    docs: 新特性
+  - name: Fix
+    docs: 修补校验
+  - name: Docs
+    docs: 文档变更
+scopes:
+  - name: Scripts
+    docs: 脚本文件相关
+  - name: Asserts
+    docs: 资源文件

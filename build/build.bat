@@ -1,3 +1,4 @@
 @echo off
-set CGO_ENABLED=0
-go build -ldflags="-s -w" -o build\agc.exe .\cmd\agc\
+cargo build --release
+copy /Y target\release\agc.exe build\agc.exe
+echo Build complete: build\agc.exe
