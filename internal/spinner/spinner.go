@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Evan-acg/GitConventionalCommits/internal/color"
 )
 
 func Run(msg string, fn func() error) error {
@@ -21,7 +23,7 @@ func Run(msg string, fn func() error) error {
 			select {
 			case <-stop:
 				fmt.Fprintf(os.Stderr, "\r%s\r", strings.Repeat(" ", len(msg)+4))
-				fmt.Fprintln(os.Stderr, msg+" ✓ 完成")
+				fmt.Fprintln(os.Stderr, msg+" "+color.GreenS("✓ 完成"))
 				return
 			default:
 				fmt.Fprintf(os.Stderr, "\r%s %c", msg, chars[i%len(chars)])
