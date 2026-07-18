@@ -135,7 +135,7 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 		return fmt.Errorf("AI 未生成有效 commit 消息")
 	}
 	if reason != "" {
-		fmt.Println(color.GrayS("\n" + reason))
+		fmt.Println(color.YellowS("\n" + reason))
 	}
 
 	var valid []commit.Entry
@@ -149,6 +149,12 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 	entries = valid
 	if len(entries) == 0 {
 		return fmt.Errorf("AI 未生成有效 commit 消息")
+	}
+
+	if len(entries) == 1 {
+		fmt.Println(color.BoldCyanS("本次变更将作为 1 条提交"))
+	} else {
+		fmt.Println(color.BoldCyanF("本次变更将分为 %d 条提交", len(entries)))
 	}
 
 	for i := range entries {
