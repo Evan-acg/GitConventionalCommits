@@ -152,7 +152,9 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 	}
 
 	if len(entries) == 1 {
+		fmt.Println()
 		fmt.Println(color.BoldCyanS("本次变更将作为 1 条提交"))
+		fmt.Println()
 	} else {
 		fmt.Println(color.BoldCyanF("本次变更将分为 %d 条提交", len(entries)))
 	}
