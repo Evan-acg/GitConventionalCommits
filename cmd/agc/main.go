@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/Evan-acg/GitConventionalCommits/internal/app"
+	"github.com/Evan-acg/GitConventionalCommits/internal/color"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 		FDPattern:   *fdPattern,
 		LazyGitPath: *lazygitPath,
 	}); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, color.RedS(err.Error()))
 		os.Exit(1)
 	}
 }

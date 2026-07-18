@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/Evan-acg/GitConventionalCommits/internal/color"
 )
 
 type Entry struct {
@@ -24,15 +26,15 @@ type AIResponse struct {
 
 func ConfirmEntry(entry Entry) bool {
 	msg := FormatMessage(entry)
-	fmt.Println("\n生成的提交消息:")
-	fmt.Println(msg)
+	fmt.Println(color.CyanS("生成的提交消息:"))
+	fmt.Println(color.BoldS(msg))
 	if len(entry.Files) > 0 {
-		fmt.Println("\n关联文件:")
+		fmt.Println(color.CyanS("\n关联文件:"))
 		for _, f := range entry.Files {
 			fmt.Println("  " + f)
 		}
 	}
-	fmt.Print("\n确认提交？回复 ok 执行: ")
+	fmt.Print(color.CyanS("\n确认提交？回复 ok 执行: "))
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()

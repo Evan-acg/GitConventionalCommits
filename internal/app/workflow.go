@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Evan-acg/GitConventionalCommits/internal/ai"
+	"github.com/Evan-acg/GitConventionalCommits/internal/color"
 	"github.com/Evan-acg/GitConventionalCommits/internal/commit"
 	"github.com/Evan-acg/GitConventionalCommits/internal/config"
 	"github.com/Evan-acg/GitConventionalCommits/internal/git"
@@ -46,7 +47,7 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 
 		cf, err := git.ChangedFiles()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "警告: 获取变更文件列表失败: %v\n", err)
+			fmt.Fprintln(os.Stderr, color.YellowF("警告: 获取变更文件列表失败: %v", err))
 		}
 		changedFiles = cf
 
@@ -62,7 +63,7 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 	}
 
 	if diff == "" && len(untrackedFiles) == 0 {
-		fmt.Println("没有未暂存的变更")
+		fmt.Println(color.GrayS("没有未暂存的变更"))
 		return nil
 	}
 
@@ -134,13 +135,13 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 		return fmt.Errorf("AI 未生成有效 commit 消息")
 	}
 	if reason != "" {
-		fmt.Println("\n" + reason)
+		fmt.Println(color.YellowS("\n" + reason))
 	}
 
 	var valid []commit.Entry
 	for _, e := range entries {
 		if e.Type == "" || e.Scope == "" || e.Message == "" {
-			fmt.Fprintf(os.Stderr, "警告: AI 返回的 entry 缺少必要字段，已跳过\n")
+			fmt.Fprintln(os.Stderr, color.YellowS("警告: AI 返回的 entry 缺少必要字段，已跳过"))
 			continue
 		}
 		valid = append(valid, e)
@@ -150,17 +151,25 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 		return fmt.Errorf("AI 未生成有效 commit 消息")
 	}
 
+	if len(entries) == 1 {
+		fmt.Println()
+		fmt.Println(color.BoldCyanS("本次变更将作为 1 条提交"))
+		fmt.Println()
+	} else {
+		fmt.Println(color.BoldCyanF("本次变更将分为 %d 条提交", len(entries)))
+	}
+
 	for i := range entries {
 		entries[i].Type = strutil.Capitalize(entries[i].Type)
 		entries[i].Scope = strutil.Capitalize(entries[i].Scope)
 		msg := commit.FormatMessage(entries[i])
 
 		if len(entries) > 1 {
-			fmt.Printf("\n--- 提交 %d/%d ---\n", i+1, len(entries))
+			fmt.Println(color.CyanF("\n--- 提交 %d/%d ---", i+1, len(entries)))
 		}
 
 		if !commit.ConfirmEntry(entries[i]) {
-			fmt.Println("已取消")
+			fmt.Println(color.YellowS("已取消"))
 			return nil
 		}
 
@@ -177,7 +186,7 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 			return fmt.Errorf("git commit 失败: %w", err)
 		}
 	}
-	fmt.Println("全部提交成功")
+	fmt.Println(color.GreenS("全部提交成功"))
 	return nil
 }
 
