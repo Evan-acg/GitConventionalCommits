@@ -62,6 +62,7 @@ func (Workflow) Run(ctx context.Context, opts Options) error {
 		if err := handleStagedChanges(ctx, llm, typeList, scopeList, opts); err != nil {
 			return err
 		}
+		return nil
 	}
 
 	return handleUnstagedChanges(ctx, llm, typeList, scopeList, opts)
