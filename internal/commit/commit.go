@@ -58,12 +58,31 @@ func StageFiles(files []string) error {
 	return exec.Command("git", args...).Run()
 }
 
+func UnstageFiles(files []string) error {
+	args := append([]string{"restore", "--staged"}, files...)
+	return exec.Command("git", args...).Run()
+}
+
 func Commit(msg string) error {
 	parts := strings.SplitN(msg, "\n\n", 2)
 	args := []string{"commit", "-m", parts[0]}
 	if len(parts) > 1 && parts[1] != "" {
 		args = append(args, "-m", parts[1])
 	}
+	cmd := exec.Command("git", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func CommitFiles(msg string, files []string) error {
+	parts := strings.SplitN(msg, "\n\n", 2)
+	args := []string{"commit", "-m", parts[0]}
+	if len(parts) > 1 && parts[1] != "" {
+		args = append(args, "-m", parts[1])
+	}
+	args = append(args, "--")
+	args = append(args, files...)
 	cmd := exec.Command("git", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

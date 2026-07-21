@@ -49,6 +49,23 @@ func DiffCachedStat() (string, error) {
 	return string(out), nil
 }
 
+func DiffCached() (string, error) {
+	out, err := exec.Command("git", "diff", "--cached").Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
+func StagedFiles() ([]string, error) {
+	out, err := exec.Command("git", "diff", "--cached", "--name-only").Output()
+	if err != nil {
+		return nil, err
+	}
+	files := strings.Fields(string(out))
+	return files, nil
+}
+
 func LsUntracked() ([]string, error) {
 	out, err := exec.Command("git", "ls-files", "--others", "--exclude-standard").Output()
 	if err != nil {
