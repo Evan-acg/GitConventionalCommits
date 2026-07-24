@@ -17,11 +17,7 @@ impl GitPusher {
 }
 
 impl PipelineStage for GitPusher {
-    fn execute(&self, ctx: &mut PipelineContext) -> anyhow::Result<()> {
-        if !ctx.has_changes {
-            return Ok(());
-        }
-
+    fn execute(&self, _ctx: &mut PipelineContext) -> anyhow::Result<()> {
         spinner::run(&format!("正在执行 git push {}", self.remote), || {
             self.git.push(&self.remote)
         })?;
