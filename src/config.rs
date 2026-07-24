@@ -24,7 +24,7 @@ pub fn load(skill_path: &str, lazygit_path: &str) -> (Vec<String>, Vec<String>) 
     };
 
     if let Ok(data) = fs::read_to_string(lp) {
-        if let Ok(cfg) = serde_yaml::from_str::<LazyGitConfig>(&data) {
+        if let Ok(cfg) = serde_yml::from_str::<LazyGitConfig>(&data) {
             let types: Vec<String> = cfg
                 .types
                 .unwrap_or_default()

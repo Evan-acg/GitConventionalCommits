@@ -1,5 +1,3 @@
-use std::future::Future;
-
 #[derive(Debug, Clone)]
 pub struct Request {
     pub types: Vec<String>,
@@ -14,5 +12,5 @@ pub trait AiProvider {
         &self,
         ctx: &crate::app::WorkflowContext,
         req: &Request,
-    ) -> impl Future<Output = anyhow::Result<String>> + Send;
+    ) -> anyhow::Result<String>;
 }

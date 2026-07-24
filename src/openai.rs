@@ -2,6 +2,8 @@ use crate::ai::{AiProvider, Request};
 use crate::app::WorkflowContext;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+use ureq::config::Config;
+use ureq::tls::{TlsConfig, TlsProvider};
 
 #[derive(Serialize, Deserialize)]
 struct ChatMessage {
@@ -37,7 +39,7 @@ pub struct OpenAI {
     pub api_key: String,
     pub model: String,
     pub base_url: String,
-    pub client: reqwest::Client,
+    pub agent: ureq::Agent,
 }
 
 impl OpenAI {
@@ -46,16 +48,21 @@ impl OpenAI {
             api_key,
             model,
             base_url,
-            client: reqwest::Client::builder()
-                .timeout(Duration::from_secs(120))
+            agent: Config::builder()
+                .timeout_global(Some(Duration::from_secs(120)))
+                .tls_config(
+                    TlsConfig::builder()
+                        .provider(TlsProvider::NativeTls)
+                        .build(),
+                )
                 .build()
-                .expect("创建 HTTP 客户端失败"),
+                .into(),
         }
     }
 }
 
 impl AiProvider for OpenAI {
-    async fn generate(&self, _ctx: &WorkflowContext, req: &Request) -> anyhow::Result<String> {
+    fn generate(&self, _ctx: &WorkflowContext, req: &Request) -> anyhow::Result<String> {
         let type_list: String = req
             .types
             .iter()
@@ -122,15 +129,17 @@ impl AiProvider for OpenAI {
         };
 
         let url = format!("{}/v1/chat/completions", self.base_url.trim_end_matches('/'));
-        let resp = self
-            .client
-            .post(&url)
-            .header("Authorization", format!("Bearer {}", self.api_key))
-            .json(&chat_req)
-            .send()
-            .await?;
+        let body = serde_json::to_string(&chat_req)?;
 
-        let chat_resp: ChatResponse = resp.json().await?;
+        let mut resp = self
+            .agent
+            .post(&url)
+            .header("Authorization", &format!("Bearer {}", self.api_key))
+            .content_type("application/json")
+            .send(&body)?;
+
+        let body_text = resp.body_mut().read_to_string()?;
+        let chat_resp: ChatResponse = serde_json::from_str(&body_text)?;
 
         if chat_resp.choices.is_empty() {
             if let Some(err) = &chat_resp.error {

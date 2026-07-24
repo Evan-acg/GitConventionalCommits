@@ -23,7 +23,7 @@ impl Workflow {
         Self
     }
 
-    pub async fn run(&self, opts: Options) -> anyhow::Result<()> {
+    pub fn run(&self, opts: Options) -> anyhow::Result<()> {
         let (type_list, scope_list) = config::load(&opts.skill_path, &opts.lazygit_path);
 
         let git = RealGit;
@@ -87,13 +87,13 @@ impl Workflow {
 
         let mut raw = String::new();
         spinner::run("正在调用 AI 生成 commit 消息", || {
-            let r = futures::executor::block_on(llm.generate(&WorkflowContext, &Request {
+            let r = llm.generate(&WorkflowContext, &Request {
                 types: type_list.clone(),
                 scopes: scope_list.clone(),
                 diff: diff.clone(),
                 git_info: git_info.clone(),
                 extra_context: extra_context.clone(),
-            }))?;
+            })?;
             raw = r;
             Ok(())
         })?;
