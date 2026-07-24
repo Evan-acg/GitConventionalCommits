@@ -9,6 +9,6 @@ pub struct Request {
     pub extra_context: String,
 }
 
-pub trait AiProvider {
+pub trait AiProvider: Send + Sync {
     fn generate(&self, req: &Request) -> anyhow::Result<String>;
 }

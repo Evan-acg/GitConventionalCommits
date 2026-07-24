@@ -81,4 +81,12 @@ impl GitBackend for RealGit {
     fn commit(&self, msg: &str) -> anyhow::Result<()> {
         crate::commit::executor::commit(msg)
     }
+
+    fn push(&self, remote: &str) -> anyhow::Result<()> {
+        let status = Command::new("git").args(["push", remote]).status()?;
+        if !status.success() {
+            anyhow::bail!("git push {remote} 失败");
+        }
+        Ok(())
+    }
 }

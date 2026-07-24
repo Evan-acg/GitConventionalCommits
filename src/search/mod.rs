@@ -4,7 +4,7 @@ pub mod rg;
 pub use fd::*;
 pub use rg::*;
 
-pub trait SearchBackend {
+pub trait SearchBackend: Send + Sync {
     fn rg_context(&self, files: &[String], pattern: &str) -> String;
     fn fd_context(&self, files: &[String], pattern: &str) -> String;
 }

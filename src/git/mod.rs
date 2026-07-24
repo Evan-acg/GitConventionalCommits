@@ -1,6 +1,6 @@
 pub mod real;
 
-pub trait GitBackend {
+pub trait GitBackend: Send + Sync {
     fn diff(&self) -> anyhow::Result<String>;
     fn changed_files(&self) -> anyhow::Result<Vec<String>>;
     fn status_short(&self) -> anyhow::Result<String>;
@@ -11,4 +11,5 @@ pub trait GitBackend {
     fn stage_all(&self) -> anyhow::Result<()>;
     fn stage_files(&self, files: &[String]) -> anyhow::Result<()>;
     fn commit(&self, msg: &str) -> anyhow::Result<()>;
+    fn push(&self, remote: &str) -> anyhow::Result<()>;
 }

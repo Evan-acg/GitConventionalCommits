@@ -3,6 +3,12 @@ use argh::FromArgs;
 #[derive(FromArgs)]
 #[argh(description = "AI Git Commit 助手")]
 pub struct Cli {
+    #[argh(positional, description = "目录匹配模式，从历史记录中过滤")]
+    pub directory: Option<String>,
+
+    #[argh(option, description = "提交完成后执行 git push 到指定远程仓库 (例如: --push origin)")]
+    pub push: Option<String>,
+
     #[argh(option, description = "path to git-commit SKILL.md")]
     pub skill_path: Option<String>,
     #[argh(option, description = "API key (优先级高于 MESSAGE_API_KEY 环境变量)")]
