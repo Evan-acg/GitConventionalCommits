@@ -1,6 +1,6 @@
 use crate::AgcWorld;
 use cucumber::{given, when, then};
-use agc::config;
+use agc::config::ConfigChain;
 use std::fs;
 
 #[given("存在 .lazygit.yaml 文件包含 type 和 scope 定义")]
@@ -74,9 +74,9 @@ async fn when_load_config(world: &mut AgcWorld) {
     if let Some(ref dir) = world.temp_dir {
         std::env::set_current_dir(dir.path()).ok();
     }
-    let (types, scopes) = config::load(&world.config_skill_path, &world.config_lazygit_path);
-    world.loaded_types = types;
-    world.loaded_scopes = scopes;
+    let cfg = ConfigChain::new(&world.config_lazygit_path, &world.config_skill_path).load();
+    world.loaded_types = cfg.types;
+    world.loaded_scopes = cfg.scopes;
     if let Some(dir) = cur_dir {
         std::env::set_current_dir(dir).ok();
     }
@@ -84,9 +84,9 @@ async fn when_load_config(world: &mut AgcWorld) {
 
 #[when("使用自定义路径加载配置")]
 async fn when_load_custom_config(world: &mut AgcWorld) {
-    let (types, scopes) = config::load("", &world.config_lazygit_path);
-    world.loaded_types = types;
-    world.loaded_scopes = scopes;
+    let cfg = ConfigChain::new(&world.config_lazygit_path, "").load();
+    world.loaded_types = cfg.types;
+    world.loaded_scopes = cfg.scopes;
 }
 
 #[then("返回的 types 列表包含 Feat")]

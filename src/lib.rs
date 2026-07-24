@@ -1,9 +1,10 @@
 pub mod ai;
-pub mod app;
+pub mod cli;
 pub mod commit;
 pub mod config;
+pub mod error;
 pub mod git;
-pub mod openai;
 pub mod search;
-pub mod spinner;
 pub mod strutil;
+pub mod ui;
+pub mod workflow;

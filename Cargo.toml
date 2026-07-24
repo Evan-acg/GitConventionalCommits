@@ -25,6 +25,7 @@ opt-level = "z"
 
 [dev-dependencies]
 cucumber = "0.23"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 assert_cmd = "2"
 assert_fs = "1"
 predicates = "3"

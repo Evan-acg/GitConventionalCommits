@@ -1,5 +1,4 @@
 use agc::ai::{AiProvider, Request};
-use agc::app::WorkflowContext;
 use agc::commit::Entry;
 use agc::git::GitBackend;
 use std::collections::VecDeque;
@@ -96,7 +95,7 @@ impl MockAiProvider {
 }
 
 impl AiProvider for MockAiProvider {
-    async fn generate(&self, _ctx: &WorkflowContext, _req: &Request) -> anyhow::Result<String> {
+    fn generate(&self, _req: &Request) -> anyhow::Result<String> {
         let err = *self.generate_error.lock().unwrap();
         if err {
             anyhow::bail!("mock ai error")

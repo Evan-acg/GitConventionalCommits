@@ -1,6 +1,6 @@
 use crate::AgcWorld;
 use cucumber::{given, when, then};
-use agc::commit;
+use agc::commit::service;
 
 #[given("AI 返回单条 JSON 响应")]
 async fn given_ai_single_response(world: &mut AgcWorld) {
@@ -51,7 +51,7 @@ async fn given_ai_empty_response(world: &mut AgcWorld) {
 
 #[when("解析响应")]
 async fn when_parse_response(world: &mut AgcWorld) {
-    let (entries, reason) = commit::parse_entries(&world.ai_response);
+    let (entries, reason) = service::parse_entries(&world.ai_response);
     world.entries = entries;
     world.reason = reason;
 }

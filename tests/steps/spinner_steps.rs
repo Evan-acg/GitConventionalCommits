@@ -12,7 +12,7 @@ async fn given_two_tasks(_world: &mut AgcWorld) {}
 
 #[when("在 spinner 中执行任务")]
 async fn when_spinner_run_success(world: &mut AgcWorld) {
-    let result = agc::spinner::run("测试任务", || {
+    let result = agc::ui::spinner::run("测试任务", || {
         std::thread::sleep(std::time::Duration::from_millis(50));
         Ok(())
     });
@@ -22,11 +22,11 @@ async fn when_spinner_run_success(world: &mut AgcWorld) {
 
 #[when("分别用 spinner 执行两个任务")]
 async fn when_spinner_run_twice(world: &mut AgcWorld) {
-    let r1 = agc::spinner::run("第一个任务", || Ok(()));
+    let r1 = agc::ui::spinner::run("第一个任务", || Ok(()));
     assert!(r1.is_ok());
     world.workflow_output.push("第一个任务 ✓ 完成".to_string());
 
-    let r2 = agc::spinner::run("第二个任务", || Ok(()));
+    let r2 = agc::ui::spinner::run("第二个任务", || Ok(()));
     assert!(r2.is_ok());
     world.workflow_output.push("第二个任务 ✓ 完成".to_string());
 }
@@ -47,7 +47,7 @@ async fn then_spinner_stops(_world: &mut AgcWorld) {}
 
 #[then("spinner 返回错误")]
 async fn then_spinner_error(_world: &mut AgcWorld) {
-    let result = agc::spinner::run("会失败的任务", || {
+    let result = agc::ui::spinner::run("会失败的任务", || {
         anyhow::bail!("任务失败")
     });
     assert!(result.is_err(), "should return error");

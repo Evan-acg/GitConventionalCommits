@@ -1,6 +1,6 @@
 use crate::AgcWorld;
 use cucumber::{given, when, then};
-use agc::commit::{self, Entry};
+use agc::commit::Entry;
 use agc::strutil;
 
 #[given("单个 Entry 包含 type scope message")]
@@ -58,7 +58,7 @@ async fn given_entries_with_missing_field(world: &mut AgcWorld) {
 #[when("格式化消息")]
 async fn when_format(world: &mut AgcWorld) {
     if let Some(ref entry) = world.current_entry {
-        world.formatted_msg = commit::format_message(entry);
+        world.formatted_msg = agc::commit::service::format_message(entry);
     }
 }
 

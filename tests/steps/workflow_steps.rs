@@ -80,7 +80,7 @@ async fn when_run_workflow(world: &mut AgcWorld) {
     }
 
     let ai_raw = world.mock_ai.generate_result.lock().unwrap().clone();
-    let (mut entries, _reason) = commit::parse_entries(&ai_raw);
+    let (mut entries, _reason) = commit::service::parse_entries(&ai_raw);
 
     if entries.is_empty() {
         world.workflow_output.push("AI 未生成有效 commit 消息".to_string());
@@ -113,7 +113,7 @@ async fn when_run_workflow(world: &mut AgcWorld) {
         } else {
             world.mock_git.stage_all().unwrap();
         }
-        world.mock_git.commit(&commit::format_message(entry)).unwrap();
+        world.mock_git.commit(&commit::service::format_message(entry)).unwrap();
     }
     world.workflow_output.push("全部提交成功".to_string());
 }
