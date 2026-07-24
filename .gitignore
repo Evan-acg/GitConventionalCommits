@@ -4,6 +4,7 @@
 build/*
 !build/*.bat
 !build/*.sh
+!build/*.ps1
 *.exe
 target/
 
