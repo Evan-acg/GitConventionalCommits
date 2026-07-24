@@ -153,22 +153,6 @@ impl Workflow {
             println!("\n{}", color::yellow(&reason));
         }
 
-        let entries: Vec<_> = entries
-            .into_iter()
-            .filter(|e| {
-                if e.entry_type.is_empty() || e.scope.is_empty() || e.message.is_empty() {
-                    eprintln!("{}", color::yellow("警告: AI 返回的 entry 缺少必要字段，已跳过"));
-                    false
-                } else {
-                    true
-                }
-            })
-            .collect();
-
-        if entries.is_empty() {
-            anyhow::bail!("AI 未生成有效 commit 消息");
-        }
-
         let total = entries.len();
         for (i, mut entry) in entries.into_iter().enumerate() {
             entry.entry_type = strutil::capitalize(&entry.entry_type);

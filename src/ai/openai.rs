@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::time::Duration;
 use ureq::config::Config;
 use ureq::tls::{TlsConfig, TlsProvider};
@@ -15,6 +16,8 @@ struct ChatMessage {
 struct ChatRequest {
     model: String,
     messages: Vec<ChatMessage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    response_format: Option<serde_json::Value>,
 }
 
 #[derive(Deserialize)]
@@ -93,7 +96,7 @@ impl AiProvider for OpenAI {
 可用的 Scope:
 {scope_list}
 
-输出格式: 始终返回 JSON 对象，包含以下字段:
+输出格式: 始终返回纯 JSON 对象（不要 markdown 代码块，不要额外说明），包含以下字段:
 - reason: 分析说明 (中文，说明为何选择单条或多条提交)
 - data: commit 消息数组，每个元素包含以下字段:
   - type: 变更类型 (必填，从可用 Type 中选择)
@@ -109,9 +112,9 @@ impl AiProvider for OpenAI {
 - 分析 diff 内容判断是否需要分多条 commit
 - 如果 diff 包含多个独立不相关的变更，为每组独立变更输出一条 commit
 - 如果所有变更是相关的、完成单一目标，只输出一条
-- 只返回 JSON 对象，不要额外说明
+- 只返回 JSON 对象，不要 markdown 代码块、不要额外说明
 
-示例输出:
+示例输出（这是唯一合法格式）:
 {{"reason": "本次变更中的修改紧密相关，适合作为单条提交", "data": [{{"type": "Feat", "scope": "Git", "message": "添加新的 git 函数", "files": ["internal/git/git.go"], "detail": "- 新增 StatusShort 函数\n- 新增 DiffStat 函数"}}]}}"#
         );
 
@@ -136,6 +139,7 @@ impl AiProvider for OpenAI {
                     content: user_content,
                 },
             ],
+            response_format: Some(json!({"type": "json_object"})),
         };
 
         let url = format!("{}/v1/chat/completions", self.base_url.trim_end_matches('/'));
