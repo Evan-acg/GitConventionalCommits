@@ -3,6 +3,7 @@ use serde::Deserialize;
 use std::fs;
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct TypeScopeItem {
     name: String,
     docs: Option<String>,
