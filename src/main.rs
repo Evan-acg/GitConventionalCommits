@@ -1,7 +1,8 @@
 use agc::cli::Cli;
+use agc::ui::color;
 use agc::workflow;
 
-fn main() -> anyhow::Result<()> {
+fn main() {
     let cli = Cli::parse();
 
     let skill_path = cli.skill_path.unwrap_or_default();
@@ -10,13 +11,22 @@ fn main() -> anyhow::Result<()> {
     let fd_pattern = cli.fd_pattern.unwrap_or_default();
     let lazygit_path = cli.lazygit_config.unwrap_or_default();
 
-    let wf = workflow::build_default_workflow(
+    match workflow::build_default_workflow(
         &skill_path,
         &lazygit_path,
         &api_key,
         &rg_pattern,
         &fd_pattern,
-    )?;
-
-    wf.run()
+    ) {
+        Ok(wf) => {
+            if let Err(e) = wf.run() {
+                eprintln!("{}", color::red(&e.to_string()));
+                std::process::exit(1);
+            }
+        }
+        Err(e) => {
+            eprintln!("{}", color::red(&e.to_string()));
+            std::process::exit(1);
+        }
+    }
 }

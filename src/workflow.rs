@@ -5,6 +5,7 @@ use crate::git::GitBackend;
 use crate::search::{self, SearchBackend};
 use crate::strutil;
 use crate::ui::spinner;
+use crate::ui::color;
 
 pub struct WorkflowBuilder {
     git: Option<Box<dyn GitBackend>>,
@@ -149,14 +150,14 @@ impl Workflow {
             anyhow::bail!("AI 未生成有效 commit 消息");
         }
         if !reason.is_empty() {
-            println!("\n{reason}");
+            println!("\n{}", color::yellow(&reason));
         }
 
         let entries: Vec<_> = entries
             .into_iter()
             .filter(|e| {
                 if e.entry_type.is_empty() || e.scope.is_empty() || e.message.is_empty() {
-                    eprintln!("警告: AI 返回的 entry 缺少必要字段，已跳过");
+                    eprintln!("{}", color::yellow("警告: AI 返回的 entry 缺少必要字段，已跳过"));
                     false
                 } else {
                     true
@@ -175,11 +176,11 @@ impl Workflow {
             let msg = commit::service::format_message(&entry);
 
             if total > 1 {
-                println!("\n--- 提交 {}/{} ---", i + 1, total);
+                println!("\n{}", color::bold_cyan(&format!("--- 提交 {}/{} ---", i + 1, total)));
             }
 
             if !commit::service::confirm_entry(&entry) {
-                println!("已取消");
+                println!("{}", color::yellow("已取消"));
                 return Ok(());
             }
 
@@ -191,7 +192,7 @@ impl Workflow {
             self.git.commit(&msg)?;
         }
 
-        println!("全部提交成功");
+        println!("{}", color::green("全部提交成功"));
         Ok(())
     }
 }

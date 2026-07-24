@@ -20,7 +20,7 @@ where
             thread::sleep(Duration::from_millis(100));
         }
         eprint!("\r{}\r", " ".repeat(msg_owned.len() + 4));
-        eprintln!("{} ✓ 完成", msg_owned);
+        eprintln!("{} {}", msg_owned, crate::ui::color::green("✓ 完成"));
     });
 
     let result = f();
