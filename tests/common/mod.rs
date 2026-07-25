@@ -77,6 +77,9 @@ impl GitBackend for MockGitBackend {
         cm.push(msg.to_string());
         Ok(())
     }
+    fn push(&self, _remote: &str) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
