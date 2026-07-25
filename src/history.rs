@@ -38,6 +38,8 @@ impl History {
             .unwrap_or(path)
             .to_string_lossy()
             .to_string();
+        // 去掉 Windows 长路径前缀 \\?\
+        let path_str = path_str.strip_prefix(r"\\?\").unwrap_or(&path_str).to_string();
 
         // 已存在 → 移到最前
         if let Some(pos) = self.entries.iter().position(|e| e == &path_str) {
@@ -169,7 +171,7 @@ fn dirs_data_dir() -> Option<PathBuf> {
 
 #[cfg(not(target_family = "unix"))]
 fn dirs_data_dir() -> Option<PathBuf> {
-    None
+    std::env::var("APPDATA").ok().map(PathBuf::from)
 }
 
 #[cfg(target_family = "unix")]
@@ -179,5 +181,5 @@ fn dirs_home_dir() -> Option<PathBuf> {
 
 #[cfg(not(target_family = "unix"))]
 fn dirs_home_dir() -> Option<PathBuf> {
-    None
+    std::env::var("USERPROFILE").ok().map(PathBuf::from)
 }
