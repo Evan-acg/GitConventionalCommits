@@ -4,6 +4,7 @@ use agc::ai::openai::OpenAI;
 use agc::cli::Cli;
 use agc::config::ConfigChain;
 use agc::git::real::RealGit;
+use agc::git::GitBackend;
 use agc::history::History;
 use agc::pipeline::{PipelineBuilder, PipelineContext};
 use agc::search::RealSearch;
@@ -54,6 +55,19 @@ fn main() {
             history.add(&cwd);
             history.save();
         }
+    }
+
+    // ── 步骤1.5：--pull 短路（仅拉取，不进行 AI 提交） ──
+    if let Some(remote) = cli.pull {
+        let git = RealGit;
+        match git.pull(&remote) {
+            Ok(()) => println!("{}", color::green(&format!("git pull {remote} 成功"))),
+            Err(e) => {
+                eprintln!("{}", color::red(&e.to_string()));
+                std::process::exit(1);
+            }
+        }
+        return;
     }
 
     // ── 步骤2：构建配置 ──

@@ -80,6 +80,9 @@ impl GitBackend for MockGitBackend {
     fn push(&self, _remote: &str) -> anyhow::Result<()> {
         Ok(())
     }
+    fn pull(&self, _remote: &str) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Debug)]

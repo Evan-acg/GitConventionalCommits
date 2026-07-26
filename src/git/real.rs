@@ -89,4 +89,12 @@ impl GitBackend for RealGit {
         }
         Ok(())
     }
+
+    fn pull(&self, remote: &str) -> anyhow::Result<()> {
+        let status = Command::new("git").args(["pull", remote]).status()?;
+        if !status.success() {
+            anyhow::bail!("git pull {remote} 失败");
+        }
+        Ok(())
+    }
 }

@@ -9,6 +9,9 @@ pub struct Cli {
     #[argh(option, description = "提交完成后执行 git push 到指定远程仓库 (例如: --push origin)")]
     pub push: Option<String>,
 
+    #[argh(option, description = "仅执行 git pull 到指定远程仓库 (例如: --pull origin)，不进行 AI 提交")]
+    pub pull: Option<String>,
+
     #[argh(option, description = "path to git-commit SKILL.md")]
     pub skill_path: Option<String>,
     #[argh(option, description = "API key (优先级高于 MESSAGE_API_KEY 环境变量)")]
