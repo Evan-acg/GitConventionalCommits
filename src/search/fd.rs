@@ -27,7 +27,11 @@ pub fn fd_context(changed_files: &[String], pattern: &str) -> String {
     let mut seen_stems: HashSet<String> = HashSet::new();
     for f in changed_files {
         let path = Path::new(f);
-        let stem = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
+        let stem = path
+            .file_stem()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
         if !seen_stems.insert(stem.clone()) {
             continue;
         }
@@ -38,10 +42,7 @@ pub fn fd_context(changed_files: &[String], pattern: &str) -> String {
             .output()
         {
             let s = String::from_utf8_lossy(&out.stdout);
-            let related: Vec<&str> = s
-                .lines()
-                .filter(|line| line.trim() != f)
-                .collect();
+            let related: Vec<&str> = s.lines().filter(|line| line.trim() != f).collect();
             if !related.is_empty() {
                 sections.push(format!("{f} 的关联文件:\n{}", related.join("\n")));
             }
@@ -80,9 +81,15 @@ pub fn fd_context(changed_files: &[String], pattern: &str) -> String {
 
 fn which(cmd: &str) -> anyhow::Result<()> {
     let status = if cfg!(windows) {
-        Command::new("where").arg(cmd).stdout(std::process::Stdio::null()).status()
+        Command::new("where")
+            .arg(cmd)
+            .stdout(std::process::Stdio::null())
+            .status()
     } else {
-        Command::new("which").arg(cmd).stdout(std::process::Stdio::null()).status()
+        Command::new("which")
+            .arg(cmd)
+            .stdout(std::process::Stdio::null())
+            .status()
     };
     match status {
         Ok(s) if s.success() => Ok(()),

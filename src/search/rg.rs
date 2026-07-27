@@ -31,9 +31,15 @@ pub fn rg_context(files: &[String], pattern: &str) -> String {
 
 fn which(cmd: &str) -> anyhow::Result<()> {
     let status = if cfg!(windows) {
-        Command::new("where").arg(cmd).stdout(std::process::Stdio::null()).status()
+        Command::new("where")
+            .arg(cmd)
+            .stdout(std::process::Stdio::null())
+            .status()
     } else {
-        Command::new("which").arg(cmd).stdout(std::process::Stdio::null()).status()
+        Command::new("which")
+            .arg(cmd)
+            .stdout(std::process::Stdio::null())
+            .status()
     };
     match status {
         Ok(s) if s.success() => Ok(()),
