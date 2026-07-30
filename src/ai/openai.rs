@@ -86,6 +86,11 @@ impl AiProvider for OpenAI {
             .iter()
             .map(|s| format!("- {s}\n"))
             .collect();
+        let scope_list = if scope_list.is_empty() {
+            "- General (未配置自定义 Scope，可根据需要自行推断)\n".to_string()
+        } else {
+            scope_list
+        };
 
         let system_prompt = format!(
             r#"你是一个 git commit 消息生成助手。根据以下 git 信息和可用的 type/scope 分类，生成 conventional commit 消息。
@@ -100,7 +105,7 @@ impl AiProvider for OpenAI {
 - reason: 分析说明 (中文，说明为何选择单条或多条提交)
 - data: commit 消息数组，每个元素包含以下字段:
   - type: 变更类型 (必填，从可用 Type 中选择)
-  - scope: 变更范围 (必填，从可用 Scope 中选择)
+  - scope: 变更范围 (必填，从可用 Scope 中选择；若未列出合适项，可自行推断)
   - message: 中文描述 (一句话概括变更内容)
   - files: 该 commit 涉及的文件路径数组 (需要 git add 的文件)
   - detail: 变更的详细描述 (markdown 列表格式，以 - 开头列出每个具体变更)
