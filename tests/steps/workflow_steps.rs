@@ -24,6 +24,11 @@ async fn given_user_input_ok(world: &mut AgcWorld) {
     world.user_input.push_back("ok".to_string());
 }
 
+#[given("使用 -y 直接提交模式")]
+async fn given_auto_commit_mode(world: &mut AgcWorld) {
+    world.auto_commit = true;
+}
+
 #[given("有未暂存变更")]
 async fn given_some_diff(world: &mut AgcWorld) {
     *world.mock_git.diff_result.lock().unwrap() = "mock diff content".to_string();
@@ -102,10 +107,12 @@ async fn when_run_workflow(world: &mut AgcWorld) {
     }
 
     for entry in &entries {
-        let input = world.user_input.pop_front().unwrap_or_default();
-        if input != "ok" {
-            world.workflow_output.push("已取消".to_string());
-            return;
+        if !world.auto_commit {
+            let input = world.user_input.pop_front().unwrap_or_default();
+            if input != "ok" {
+                world.workflow_output.push("已取消".to_string());
+                return;
+            }
         }
 
         if !entry.files.is_empty() {

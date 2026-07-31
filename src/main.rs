@@ -115,7 +115,7 @@ fn main() {
         }
     };
 
-    let mut ctx = PipelineContext::new(cli.push);
+    let mut ctx = PipelineContext::new(cli.push, cli.yes);
     if let Err(e) = pipeline.run(&mut ctx) {
         eprintln!("{}", color::red(&e.to_string()));
         std::process::exit(1);

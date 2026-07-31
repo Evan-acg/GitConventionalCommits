@@ -9,7 +9,7 @@ pub fn format_message(entry: &Entry) -> String {
     }
 }
 
-pub fn confirm_entry(entry: &Entry) -> bool {
+pub fn print_entry(entry: &Entry) {
     let msg = format_message(entry);
     println!("\n{}", crate::ui::color::cyan("生成的提交消息:"));
     println!("{}", crate::ui::color::bold(&msg));
@@ -19,6 +19,10 @@ pub fn confirm_entry(entry: &Entry) -> bool {
             println!("  {f}");
         }
     }
+}
+
+pub fn confirm_entry(entry: &Entry) -> bool {
+    print_entry(entry);
     print!("\n{}", crate::ui::color::cyan("确认提交？回复 ok 执行: "));
     std::io::Write::flush(&mut std::io::stdout()).ok();
     let mut input = String::new();

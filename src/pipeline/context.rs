@@ -4,6 +4,7 @@ use crate::commit::Entry;
 pub struct PipelineContext {
     // ── 控制参数 ──
     pub auto_push: Option<String>,
+    pub auto_commit: bool,
 
     // ── 第1阶段产出：DiffCollector ──
     pub diff: String,
@@ -29,9 +30,10 @@ pub struct PipelineContext {
 }
 
 impl PipelineContext {
-    pub fn new(auto_push: Option<String>) -> Self {
+    pub fn new(auto_push: Option<String>, auto_commit: bool) -> Self {
         Self {
             auto_push,
+            auto_commit,
             diff: String::new(),
             changed_files: Vec::new(),
             status_short: String::new(),

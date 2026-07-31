@@ -36,3 +36,17 @@ Feature: 提交工作流
     And 用户输入 ok
     When 执行完整工作流
     Then 只 stage 指定的文件
+
+  Scenario: 带 -y 参数时无需确认直接提交
+    Given AI 已返回有效条目
+    And 使用 -y 直接提交模式
+    When 执行完整工作流
+    Then 输出 全部提交成功
+    And git commit 被执行 1 次
+
+  Scenario: 带 -y 参数时多条条目全部直接提交
+    Given AI 返回 2 条独立 commit 条目
+    And 使用 -y 直接提交模式
+    When 执行完整工作流
+    Then 输出 全部提交成功
+    And git commit 被执行 2 次

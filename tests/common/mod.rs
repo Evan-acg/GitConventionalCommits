@@ -163,6 +163,7 @@ pub struct AgcWorld {
     pub user_input: VecDeque<String>,
     pub workflow_output: Vec<String>,
     pub commit_count: usize,
+    pub auto_commit: bool,
 }
 
 impl Default for AgcWorld {
@@ -193,6 +194,7 @@ impl Default for AgcWorld {
             user_input: VecDeque::new(),
             workflow_output: Vec::new(),
             commit_count: 0,
+            auto_commit: false,
         }
     }
 }

@@ -22,6 +22,9 @@ pub struct Cli {
     pub fd_pattern: Option<String>,
     #[argh(option, description = "lazygit 配置路径（默认 .lazygit.yaml）")]
     pub lazygit_config: Option<String>,
+
+    #[argh(switch, short = 'y', description = "跳过人工确认，生成提交消息后直接提交")]
+    pub yes: bool,
 }
 
 impl Cli {

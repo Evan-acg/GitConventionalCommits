@@ -37,7 +37,9 @@ impl PipelineStage for CommitExecutor {
                 );
             }
 
-            if !commit::service::confirm_entry(&entry) {
+            if ctx.auto_commit {
+                commit::service::print_entry(&entry);
+            } else if !commit::service::confirm_entry(&entry) {
                 println!("{}", color::yellow("已取消"));
                 return Ok(());
             }
