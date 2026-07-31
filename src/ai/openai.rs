@@ -16,6 +16,7 @@ struct ChatMessage {
 struct ChatRequest {
     model: String,
     messages: Vec<ChatMessage>,
+    reasning_effort: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     response_format: Option<serde_json::Value>,
 }
@@ -144,6 +145,7 @@ impl AiProvider for OpenAI {
                     content: user_content,
                 },
             ],
+            reasning_effort: "low".to_string(),
             response_format: Some(json!({"type": "json_object"})),
         };
 
