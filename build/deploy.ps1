@@ -8,7 +8,8 @@ if (-not $SkipBuild) {
     cargo build --release
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     Copy-Item -Force target/release/agc.exe build/agc.exe
-    Write-Host "Build complete: build/agc.exe" -ForegroundColor Green
+    $sizeMb = [math]::Round((Get-Item build/agc.exe).Length / 1MB, 2)
+    Write-Host "Build complete: build/agc.exe (${sizeMb} MB)" -ForegroundColor Green
 }
 
 if (-not $NoDeploy) {

@@ -17,7 +17,9 @@ if $BUILD; then
     echo "Building release..."
     cargo build --release
     cp -f target/release/agc build/agc
-    echo "Build complete: build/agc"
+    size_bytes=$(stat -c %s build/agc 2>/dev/null || stat -f %z build/agc)
+    size_mb=$(awk -v b="$size_bytes" 'BEGIN { printf "%.2f", b/1048576 }')
+    echo "Build complete: build/agc (${size_mb} MB)"
 fi
 
 if $DEPLOY; then
