@@ -2,7 +2,8 @@ use std::fs;
 
 use serde::Deserialize;
 
-use super::Config;
+use super::super::source::ConfigSource;
+use super::super::Config;
 
 #[derive(Deserialize)]
 struct TypeScopeItem {
@@ -16,18 +17,21 @@ struct LazyGitConfig {
     scopes: Option<Vec<TypeScopeItem>>,
 }
 
-pub struct YamlLoader {
+/// 从 .lazygit.yaml 加载 type/scope 配置
+pub struct YamlSource {
     path: String,
 }
 
-impl YamlLoader {
+impl YamlSource {
     pub fn new(path: &str) -> Self {
         Self {
             path: if path.is_empty() { ".lazygit.yaml".into() } else { path.into() },
         }
     }
+}
 
-    pub fn load(&self) -> Option<Config> {
+impl ConfigSource<Config> for YamlSource {
+    fn load(&self) -> Option<Config> {
         let data = fs::read_to_string(&self.path).ok()?;
         let cfg = serde_yml::from_str::<LazyGitConfig>(&data).ok()?;
         let types: Vec<String> = cfg

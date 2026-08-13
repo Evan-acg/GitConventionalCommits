@@ -134,6 +134,11 @@ pub struct AgcWorld {
     pub config_skill_path: String,
     pub config_lazygit_path: String,
 
+    // Init
+    pub init_dir: Option<tempfile::TempDir>,
+    pub init_path: String,
+    pub init_error: Option<String>,
+
     // Git
     pub mock_git: MockGitBackend,
     pub git_info: String,
@@ -174,6 +179,9 @@ impl Default for AgcWorld {
             loaded_scopes: Vec::new(),
             config_skill_path: String::new(),
             config_lazygit_path: String::new(),
+            init_dir: None,
+            init_path: String::new(),
+            init_error: None,
             mock_git: MockGitBackend::new(),
             git_info: String::new(),
             git_files: Vec::new(),

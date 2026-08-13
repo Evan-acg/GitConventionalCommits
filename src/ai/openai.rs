@@ -1,10 +1,14 @@
+use std::sync::Arc;
+use std::time::Duration;
+
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::time::Duration;
 use ureq::config::Config;
-use ureq::tls::{TlsConfig, TlsProvider};
+use ureq::tls::{RootCerts, TlsConfig, TlsProvider};
 
+use super::prompt::PromptBuilder;
 use super::{AiProvider, Request};
+use crate::config::AiConfig;
 
 #[derive(Serialize, Deserialize)]
 struct ChatMessage {
@@ -39,6 +43,8 @@ struct ChatResponse {
     error: Option<ApiError>,
 }
 
+/// OpenAI 兼容协议（Chat Completions）provider，只负责传输。
+/// base_url 为完整 chat/completions 端点地址。
 pub struct OpenAI {
     api_key: String,
     model: String,
@@ -47,16 +53,20 @@ pub struct OpenAI {
 }
 
 impl OpenAI {
-    pub fn new(api_key: String, model: String, base_url: String) -> Self {
+    pub fn new(config: AiConfig) -> Self {
         Self {
-            api_key,
-            model,
-            base_url,
+            api_key: config.api_key.unwrap_or_default(),
+            model: config.model,
+            base_url: config.base_url,
             agent: Config::builder()
                 .timeout_global(Some(Duration::from_secs(120)))
                 .tls_config(
                     TlsConfig::builder()
                         .provider(TlsProvider::NativeTls)
+                        // ureq 默认使用 Mozilla webpki 根且禁用系统根，
+                        // SChannel 下会报 "unable to find any user-specified roots"，
+                        // 显式使用平台系统根证书验证
+                        .root_certs(RootCerts::PlatformVerifier)
                         .build(),
                 )
                 .build()
@@ -64,92 +74,34 @@ impl OpenAI {
         }
     }
 
-    pub fn from_env() -> anyhow::Result<Self> {
-        let api_key = std::env::var("MESSAGE_API_KEY")
-            .map_err(|_| anyhow::anyhow!("MESSAGE_API_KEY 未设置"))?;
-        let model = std::env::var("OPENAI_MODEL")
-            .unwrap_or_else(|_| "deepseek-v4-flash".to_string());
-        let base_url = std::env::var("OPENAI_BASE_URL")
-            .unwrap_or_else(|_| "https://api.deepseek.com".to_string());
-        Ok(Self::new(api_key, model, base_url))
+    /// 供 ProviderRegistry 注册的工厂函数
+    pub fn create(config: AiConfig) -> anyhow::Result<Arc<dyn AiProvider>> {
+        if config.api_key.as_deref().unwrap_or("").is_empty() {
+            anyhow::bail!("openai provider 缺少 api_key，请在配置文件或 MESSAGE_API_KEY 环境变量中设置");
+        }
+        Ok(Arc::new(Self::new(config)))
     }
 }
 
 impl AiProvider for OpenAI {
     fn generate(&self, req: &Request) -> anyhow::Result<String> {
-        let type_list: String = req
-            .types
-            .iter()
-            .map(|t| format!("- {t}\n"))
-            .collect();
-        let scope_list: String = req
-            .scopes
-            .iter()
-            .map(|s| format!("- {s}\n"))
-            .collect();
-        let scope_list = if scope_list.is_empty() {
-            "- General (未配置自定义 Scope，可根据需要自行推断)\n".to_string()
-        } else {
-            scope_list
-        };
-
-        let system_prompt = format!(
-            r#"你是一个 git commit 消息生成助手。根据以下 git 信息和可用的 type/scope 分类，生成 conventional commit 消息。
-
-可用的 Type:
-{type_list}
-
-可用的 Scope:
-{scope_list}
-
-输出格式: 始终返回纯 JSON 对象（不要 markdown 代码块，不要额外说明），包含以下字段:
-- reason: 分析说明 (中文，说明为何选择单条或多条提交)
-- data: commit 消息数组，每个元素包含以下字段:
-  - type: 变更类型 (必填，从可用 Type 中选择)
-  - scope: 变更范围 (必填，从可用 Scope 中选择；若未列出合适项，可自行推断)
-  - message: 中文描述 (一句话概括变更内容)
-  - files: 该 commit 涉及的文件路径数组 (需要 git add 的文件)
-  - detail: 变更的详细描述 (markdown 列表格式，以 - 开头列出每个具体变更)
-
-规则:
-- 根据 diff 内容选择最匹配的 Type 和 Scope
-- type 和 scope 为必填字段，不得为空
-- 消息用中文描述变更内容
-- 分析 diff 内容判断是否需要分多条 commit
-- 如果 diff 包含多个独立不相关的变更，为每组独立变更输出一条 commit
-- 如果所有变更是相关的、完成单一目标，只输出一条
-- 只返回 JSON 对象，不要 markdown 代码块、不要额外说明
-
-示例输出（这是唯一合法格式）:
-{{"reason": "本次变更中的修改紧密相关，适合作为单条提交", "data": [{{"type": "Feat", "scope": "Git", "message": "添加新的 git 函数", "files": ["internal/git/git.go"], "detail": "- 新增 StatusShort 函数\n- 新增 DiffStat 函数"}}]}}"#
-        );
-
-        let mut user_content = "请根据以下 git 信息生成 commit 消息:\n\n".to_string();
-        if !req.git_info.is_empty() {
-            user_content.push_str(&format!("--- 工作区状态 ---\n{}\n\n", req.git_info));
-        }
-        user_content.push_str(&format!("--- 完整 diff ---\n{}", req.diff));
-        if !req.extra_context.is_empty() {
-            user_content.push_str(&format!("\n\n--- 变更上下文 ---\n{}", req.extra_context));
-        }
-
         let chat_req = ChatRequest {
             model: self.model.clone(),
             messages: vec![
                 ChatMessage {
                     role: "system".to_string(),
-                    content: system_prompt,
+                    content: PromptBuilder::build_system(&req.types, &req.scopes),
                 },
                 ChatMessage {
                     role: "user".to_string(),
-                    content: user_content,
+                    content: PromptBuilder::build_user(req),
                 },
             ],
             reasning_effort: "low".to_string(),
             response_format: Some(json!({"type": "json_object"})),
         };
 
-        let url = format!("{}/v1/chat/completions", self.base_url.trim_end_matches('/'));
+        let url = self.base_url.trim_end_matches('/').to_string();
         let body = serde_json::to_string(&chat_req)?;
 
         let mut resp = self

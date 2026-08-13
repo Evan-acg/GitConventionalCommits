@@ -2,18 +2,22 @@ use std::fs;
 
 use crate::strutil;
 
-use super::Config;
+use super::super::source::ConfigSource;
+use super::super::Config;
 
-pub struct MarkdownLoader {
+/// 从 SKILL.md 的 markdown 表格加载 type 配置
+pub struct MarkdownSource {
     path: String,
 }
 
-impl MarkdownLoader {
+impl MarkdownSource {
     pub fn new(path: &str) -> Self {
         Self { path: path.into() }
     }
+}
 
-    pub fn load(&self) -> Option<Config> {
+impl ConfigSource<Config> for MarkdownSource {
+    fn load(&self) -> Option<Config> {
         if self.path.is_empty() {
             return None;
         }

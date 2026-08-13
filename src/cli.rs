@@ -23,8 +23,33 @@ pub struct Cli {
     #[argh(option, description = "lazygit 配置路径（默认 .lazygit.yaml）")]
     pub lazygit_config: Option<String>,
 
+    #[argh(option, description = "AI 配置目录（默认 ~/.config/agc，含 default.yaml）")]
+    pub config_dir: Option<String>,
+
     #[argh(switch, short = 'y', description = "跳过人工确认，生成提交消息后直接提交")]
     pub yes: bool,
+
+    #[argh(subcommand)]
+    pub sub: Option<SubCommands>,
+}
+
+#[derive(FromArgs)]
+#[argh(subcommand)]
+pub enum SubCommands {
+    Init(InitArgs),
+}
+
+#[derive(FromArgs)]
+#[argh(subcommand, name = "init")]
+/// 在指定目录初始化 AI 配置文件 default.yaml
+pub struct InitArgs {
+    /// 配置目录（默认 ~/.config/agc）
+    #[argh(positional)]
+    pub path: Option<String>,
+
+    /// 覆盖已存在的配置文件
+    #[argh(switch)]
+    pub force: bool,
 }
 
 impl Cli {

@@ -5,3 +5,4 @@ pub mod ai_steps;
 pub mod workflow_steps;
 pub mod search_steps;
 pub mod spinner_steps;
+pub mod init_steps;

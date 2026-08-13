@@ -1,10 +1,12 @@
-use super::Config;
+use super::super::source::ConfigSource;
+use super::super::Config;
 
-pub struct DefaultsLoader;
+/// 内置默认 type/scope 配置（兜底源，始终返回 Some）
+pub struct DefaultsSource;
 
-impl DefaultsLoader {
-    pub fn load(&self) -> Config {
-        Config {
+impl ConfigSource<Config> for DefaultsSource {
+    fn load(&self) -> Option<Config> {
+        Some(Config {
             types: vec![
                 "Feat".into(),
                 "Fix".into(),
@@ -19,6 +21,6 @@ impl DefaultsLoader {
                 "Revert".into(),
             ],
             scopes: vec![],
-        }
+        })
     }
 }

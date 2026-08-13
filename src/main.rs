@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
-use agc::ai::openai::OpenAI;
-use agc::cli::Cli;
-use agc::config::ConfigChain;
+use agc::cli::{Cli, SubCommands};
+use agc::config::AppConfig;
 use agc::git::real::RealGit;
 use agc::git::GitBackend;
 use agc::history::History;
@@ -12,6 +11,18 @@ use agc::ui::color;
 
 fn main() {
     let cli = Cli::parse();
+
+    // ── 步骤0：init 子命令（初始化配置文件） ──
+    if let Some(SubCommands::Init(args)) = &cli.sub {
+        match agc::config::init::run(args.path.clone(), args.force) {
+            Ok(()) => {}
+            Err(e) => {
+                eprintln!("{}", color::red(&e.to_string()));
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
 
     // ── 步骤1：目录选择 ──
     match &cli.directory {
@@ -76,25 +87,29 @@ fn main() {
     let rg_pattern = cli.rg_pattern.unwrap_or_default();
     let fd_pattern = cli.fd_pattern.unwrap_or_default();
 
-    let api_key = if !cli.api_key.as_deref().unwrap_or("").is_empty() {
-        cli.api_key.unwrap()
-    } else {
-        match std::env::var("MESSAGE_API_KEY") {
-            Ok(key) => key,
-            Err(_) => {
-                eprintln!("MESSAGE_API_KEY 未设置，可通过 --api-key 参数或 MESSAGE_API_KEY 环境变量设置");
-                std::process::exit(1);
-            }
+    let app_config = match AppConfig::load(
+        &lazygit_path,
+        &skill_path,
+        cli.config_dir.clone(),
+        cli.api_key.clone(),
+    ) {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            eprintln!("{}", color::red(&e.to_string()));
+            std::process::exit(1);
         }
     };
-    let model = std::env::var("OPENAI_MODEL")
-        .unwrap_or_else(|_| "deepseek-v4-flash".to_string());
-    let base_url = std::env::var("OPENAI_BASE_URL")
-        .unwrap_or_else(|_| "https://api.deepseek.com".to_string());
 
-    let config = ConfigChain::new(&lazygit_path, &skill_path).load();
     let git = Arc::new(RealGit) as Arc<dyn agc::git::GitBackend>;
-    let ai = Arc::new(OpenAI::new(api_key, model, base_url)) as Arc<dyn agc::ai::AiProvider>;
+    let ai = match agc::ai::ProviderRegistry::new()
+        .create(&app_config.ai.provider, app_config.ai.clone())
+    {
+        Ok(provider) => provider,
+        Err(e) => {
+            eprintln!("{}", color::red(&e.to_string()));
+            std::process::exit(1);
+        }
+    };
     let search = Arc::new(RealSearch) as Arc<dyn agc::search::SearchBackend>;
 
     // ── 步骤3：构建并执行管线 ──
@@ -102,7 +117,10 @@ fn main() {
         .with_git(git)
         .with_ai(ai)
         .with_search(search)
-        .with_config(config)
+        .with_config(agc::config::Config {
+            types: app_config.types,
+            scopes: app_config.scopes,
+        })
         .with_rg_pattern(rg_pattern)
         .with_fd_pattern(fd_pattern)
         .with_auto_push(cli.push.clone())

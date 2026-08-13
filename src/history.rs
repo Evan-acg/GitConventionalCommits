@@ -143,8 +143,8 @@ impl History {
 
     fn resolve_path() -> PathBuf {
         // XDG: ~/.local/share/agc/history
-        if let Some(data_dir) = dirs_data_dir() {
-            let path = data_dir.join("agc").join("history");
+        if let Some(data_dir) = crate::config::paths::data_dir_default() {
+            let path = data_dir.join("history");
             if let Some(parent) = path.parent() {
                 let _ = fs::create_dir_all(parent);
             }
@@ -155,23 +155,6 @@ impl History {
             .map(|h| h.join(".agc_history"))
             .unwrap_or_else(|| PathBuf::from(".agc_history"))
     }
-}
-
-#[cfg(target_family = "unix")]
-fn dirs_data_dir() -> Option<PathBuf> {
-    std::env::var("XDG_DATA_HOME")
-        .ok()
-        .map(PathBuf::from)
-        .or_else(|| {
-            std::env::var("HOME")
-                .ok()
-                .map(|h| PathBuf::from(h).join(".local").join("share"))
-        })
-}
-
-#[cfg(not(target_family = "unix"))]
-fn dirs_data_dir() -> Option<PathBuf> {
-    std::env::var("APPDATA").ok().map(PathBuf::from)
 }
 
 #[cfg(target_family = "unix")]
