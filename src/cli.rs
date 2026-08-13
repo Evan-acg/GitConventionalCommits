@@ -36,6 +36,21 @@ pub struct Cli {
 #[derive(FromArgs)]
 #[argh(subcommand)]
 pub enum SubCommands {
+    Config(ConfigArgs),
+    Git(GitArgs),
+}
+
+#[derive(FromArgs)]
+#[argh(subcommand, name = "config")]
+/// 配置管理
+pub struct ConfigArgs {
+    #[argh(subcommand)]
+    pub sub: ConfigSubCommands,
+}
+
+#[derive(FromArgs)]
+#[argh(subcommand)]
+pub enum ConfigSubCommands {
     Init(InitArgs),
 }
 
@@ -50,6 +65,47 @@ pub struct InitArgs {
     /// 覆盖已存在的配置文件
     #[argh(switch)]
     pub force: bool,
+}
+
+#[derive(FromArgs)]
+#[argh(subcommand, name = "git")]
+/// Git 仓库管理
+pub struct GitArgs {
+    #[argh(subcommand)]
+    pub sub: GitSubCommands,
+}
+
+#[derive(FromArgs)]
+#[argh(subcommand)]
+pub enum GitSubCommands {
+    Init(GitInitArgs),
+    Update(GitUpdateArgs),
+}
+
+#[derive(FromArgs)]
+#[argh(subcommand, name = "init")]
+/// 初始化 git 仓库与 .project 目录
+pub struct GitInitArgs {
+    /// 覆盖已存在的 .git-style-scope.yaml
+    #[argh(switch)]
+    pub force: bool,
+}
+
+#[derive(FromArgs)]
+#[argh(subcommand, name = "update")]
+/// 根据项目结构与 git 历史更新 .git-style-scope.yaml
+pub struct GitUpdateArgs {
+    /// 删除已不在项目结构中的 scope
+    #[argh(switch)]
+    pub prune: bool,
+
+    /// AI 配置目录（默认 ~/.config/agc）
+    #[argh(option)]
+    pub config_dir: Option<String>,
+
+    /// API key（默认读取 MESSAGE_API_KEY 环境变量）
+    #[argh(option)]
+    pub api_key: Option<String>,
 }
 
 impl Cli {

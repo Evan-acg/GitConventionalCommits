@@ -4,7 +4,7 @@ pub mod paths;
 pub mod source;
 pub mod sources;
 
-pub use ai::{AiConfig, FileConfig, ProviderSetting};
+pub use ai::{AiConfig, AiConfigLoader, FileConfig, ProviderSetting};
 pub use source::{ConfigChain, ConfigSource};
 
 #[derive(Debug, Clone, Default)]

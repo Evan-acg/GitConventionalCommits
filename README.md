@@ -71,7 +71,7 @@ Unix 环境可使用 `build/deploy.sh`。
 
 ```bash
 # 1. 初始化 AI 配置文件（生成 ~/.config/agc/default.yaml）
-agc init
+agc config init
 
 # 2. 编辑配置文件，填入 API Key（或使用环境变量 MESSAGE_API_KEY）
 notepad $env:USERPROFILE\.config\agc\default.yaml   # Windows
@@ -114,11 +114,23 @@ Usage: agc [--push <push>] [--pull <pull>] [--skill-path <skill-path>]
 
 ```bash
 # 在指定目录初始化 AI 配置文件 default.yaml
-agc init [path] [--force]
+agc config init [path] [--force]
 ```
 
 - `path`：配置目录（默认 `~/.config/agc`）
 - `--force`：覆盖已存在的配置文件
+
+```bash
+# 在当前目录初始化 git 仓库（已初始化则跳过），并生成 .project/.git-style-scope.yaml
+agc git init [--force]
+
+# 根据项目结构与 git 历史更新 .project/.git-style-scope.yaml（由 LLM 生成 scope 列表）
+agc git update [--prune] [--config-dir <目录>] [--api-key <key>]
+```
+
+- `--force`：覆盖已存在的 `.project/.git-style-scope.yaml`
+- `--prune`：删除已不在项目结构中的 scope（默认只增不删）
+- `--config-dir` / `--api-key`：AI 配置目录与 API key（默认 `~/.config/agc` 与 `MESSAGE_API_KEY`）
 
 ## 配置
 
@@ -149,7 +161,7 @@ scope:
 2. **环境变量**：`MESSAGE_API_KEY`、`AI_PROVIDER`、`OPENAI_MODEL`、`OPENAI_BASE_URL`
 3. **内置默认值**：provider `openai`，模型 `deepseek-v4-flash`
 
-`default.yaml` 示例（可由 `agc init` 生成）：
+`default.yaml` 示例（可由 `agc config init` 生成）：
 
 ```yaml
 # use_provider 选择 providers 列表中要使用的连接配置

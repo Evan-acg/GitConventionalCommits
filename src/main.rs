@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use agc::cli::{Cli, SubCommands};
+use agc::cli::{Cli, ConfigSubCommands, GitSubCommands, SubCommands};
 use agc::config::AppConfig;
 use agc::git::real::RealGit;
 use agc::git::GitBackend;
@@ -12,13 +12,46 @@ use agc::ui::color;
 fn main() {
     let cli = Cli::parse();
 
-    // ── 步骤0：init 子命令（初始化配置文件） ──
-    if let Some(SubCommands::Init(args)) = &cli.sub {
-        match agc::config::init::run(args.path.clone(), args.force) {
-            Ok(()) => {}
-            Err(e) => {
-                eprintln!("{}", color::red(&e.to_string()));
-                std::process::exit(1);
+    // ── 步骤0：config 子命令（配置管理） ──
+    if let Some(SubCommands::Config(config)) = &cli.sub {
+        match &config.sub {
+            ConfigSubCommands::Init(args) => {
+                match agc::config::init::run(args.path.clone(), args.force) {
+                    Ok(()) => {}
+                    Err(e) => {
+                        eprintln!("{}", color::red(&e.to_string()));
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    // ── 步骤0：git 子命令（仓库管理） ──
+    if let Some(SubCommands::Git(git)) = &cli.sub {
+        match &git.sub {
+            GitSubCommands::Init(args) => {
+                match agc::git::init::run(args.force) {
+                    Ok(()) => {}
+                    Err(e) => {
+                        eprintln!("{}", color::red(&e.to_string()));
+                        std::process::exit(1);
+                    }
+                }
+            }
+            GitSubCommands::Update(args) => {
+                match agc::git::update::run(
+                    args.prune,
+                    args.config_dir.clone(),
+                    args.api_key.clone(),
+                ) {
+                    Ok(()) => {}
+                    Err(e) => {
+                        eprintln!("{}", color::red(&e.to_string()));
+                        std::process::exit(1);
+                    }
+                }
             }
         }
         return;

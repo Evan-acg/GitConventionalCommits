@@ -85,18 +85,38 @@ impl OpenAI {
 
 impl AiProvider for OpenAI {
     fn generate(&self, req: &Request) -> anyhow::Result<String> {
+        self.chat(vec![
+            ChatMessage {
+                role: "system".to_string(),
+                content: PromptBuilder::build_system(&req.types, &req.scopes),
+            },
+            ChatMessage {
+                role: "user".to_string(),
+                content: PromptBuilder::build_user(req),
+            },
+        ])
+    }
+
+    fn generate_scopes(&self, req: &super::ScopeRequest) -> anyhow::Result<String> {
+        self.chat(vec![
+            ChatMessage {
+                role: "system".to_string(),
+                content: PromptBuilder::build_scope_system(),
+            },
+            ChatMessage {
+                role: "user".to_string(),
+                content: PromptBuilder::build_scope_user(req),
+            },
+        ])
+    }
+}
+
+impl OpenAI {
+    /// 发送 chat/completions 请求并返回首个 choice 的文本内容
+    fn chat(&self, messages: Vec<ChatMessage>) -> anyhow::Result<String> {
         let chat_req = ChatRequest {
             model: self.model.clone(),
-            messages: vec![
-                ChatMessage {
-                    role: "system".to_string(),
-                    content: PromptBuilder::build_system(&req.types, &req.scopes),
-                },
-                ChatMessage {
-                    role: "user".to_string(),
-                    content: PromptBuilder::build_user(req),
-                },
-            ],
+            messages,
             reasning_effort: "low".to_string(),
             response_format: Some(json!({"type": "json_object"})),
         };

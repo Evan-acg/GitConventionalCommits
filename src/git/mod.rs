@@ -1,4 +1,7 @@
+pub mod init;
+pub mod project;
 pub mod real;
+pub mod update;
 
 pub trait GitBackend: Send + Sync {
     fn diff(&self) -> anyhow::Result<String>;

@@ -108,6 +108,9 @@ impl AiProvider for MockAiProvider {
         }
         Ok(self.generate_result.lock().unwrap().clone())
     }
+    fn generate_scopes(&self, _req: &agc::ai::ScopeRequest) -> anyhow::Result<String> {
+        Ok(self.generate_result.lock().unwrap().clone())
+    }
 }
 
 #[derive(Debug)]

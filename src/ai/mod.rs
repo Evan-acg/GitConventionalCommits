@@ -15,8 +15,17 @@ pub struct Request {
     pub extra_context: String,
 }
 
+/// scope 生成的输入：项目结构目录、git 历史 scope、现有配置
+#[derive(Debug, Clone)]
+pub struct ScopeRequest {
+    pub dirs: Vec<String>,
+    pub history_scopes: Vec<String>,
+    pub existing_yaml: String,
+}
+
 pub trait AiProvider: Send + Sync {
     fn generate(&self, req: &Request) -> anyhow::Result<String>;
+    fn generate_scopes(&self, req: &ScopeRequest) -> anyhow::Result<String>;
 }
 
 pub type ProviderFactory = fn(AiConfig) -> anyhow::Result<Arc<dyn AiProvider>>;
@@ -63,6 +72,9 @@ mod tests {
     impl AiProvider for MockProvider {
         fn generate(&self, _req: &Request) -> anyhow::Result<String> {
             Ok("mock".into())
+        }
+        fn generate_scopes(&self, _req: &ScopeRequest) -> anyhow::Result<String> {
+            Ok("{\"scopes\": []}".into())
         }
     }
 

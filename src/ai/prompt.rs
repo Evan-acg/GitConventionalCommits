@@ -1,4 +1,4 @@
-use super::Request;
+use super::{Request, ScopeRequest};
 
 /// 组装发送给 LLM 的提示词，与具体 provider 的传输层解耦
 pub struct PromptBuilder;
@@ -61,6 +61,48 @@ impl PromptBuilder {
             user_content.push_str(&format!("\n\n--- 变更上下文 ---\n{}", req.extra_context));
         }
         user_content
+    }
+
+    /// 生成 scope 列表的 system 提示词
+    pub fn build_scope_system() -> String {
+        r#"你是一个项目结构分析助手。根据给定的项目目录结构、git 历史中已使用的 scope 以及现有配置，生成用于 conventional commit 的 scope 分类列表。
+
+输出格式: 始终返回纯 JSON 对象（不要 markdown 代码块，不要额外说明），包含以下字段:
+- scopes: scope 列表，每个元素包含:
+  - name: scope 名称（优先使用目录名/模块名，保留原大小写，去重）
+  - docs: 中文说明（一句话描述该 scope 覆盖的范围）
+
+规则:
+- 从项目目录结构中提炼有意义的模块/组件名作为 scope，粒度以顶层或 src 下一层为准
+- 合并 git 历史中已使用的 scope（名称相同则保留）
+- 保留现有配置中的所有 scope，可补充 docs 但不要改名
+- 每个 scope 只出现一次，名称去重（忽略大小写差异时保留一个）
+- 通常 5-15 个 scope，避免过细或过粗
+- 只返回 JSON 对象，不要 markdown 代码块、不要额外说明"#
+            .to_string()
+    }
+
+    /// 生成 scope 列表的 user 提示词
+    pub fn build_scope_user(req: &ScopeRequest) -> String {
+        let mut content = String::new();
+        if !req.dirs.is_empty() {
+            content.push_str("--- 项目目录结构 ---\n");
+            content.push_str(&req.dirs.join("\n"));
+            content.push('\n');
+        }
+        if !req.history_scopes.is_empty() {
+            content.push_str("\n--- git 历史中已使用的 scope ---\n");
+            content.push_str(&req.history_scopes.join("\n"));
+            content.push('\n');
+        }
+        if !req.existing_yaml.is_empty() {
+            content.push_str("\n--- 现有 .git-style-scope.yaml 内容（保留其中条目，不要改名） ---\n");
+            content.push_str(&req.existing_yaml);
+        }
+        if content.is_empty() {
+            content.push_str("（无输入，请根据常见项目结构生成合理的 scope 列表）");
+        }
+        content
     }
 }
 
