@@ -162,6 +162,11 @@ fn run_flow_inner(o: FlowOptions) -> anyhow::Result<()> {
     let fd_pattern = o.fd_pattern.unwrap_or_default();
 
     let app_config = AppConfig::load(&lazygit_path, &skill_path, o.config_dir, o.api_key)?;
+    println!(
+        "使用 LLM: {} ({})",
+        color::cyan(&app_config.ai.model),
+        host_of(&app_config.ai.base_url)
+    );
 
     let git = Arc::new(RealGit) as Arc<dyn GitBackend>;
     let ai = agc::ai::ProviderRegistry::new().create(&app_config.ai.provider, app_config.ai.clone())?;
@@ -186,4 +191,13 @@ fn run_flow_inner(o: FlowOptions) -> anyhow::Result<()> {
     let mut ctx = PipelineContext::new(o.auto_push, o.auto_commit);
     pipeline.run(&mut ctx)?;
     Ok(())
+}
+
+/// 从 base_url 提取域名（去掉协议与路径）
+fn host_of(url: &str) -> &str {
+    let rest = url
+        .strip_prefix("https://")
+        .or_else(|| url.strip_prefix("http://"))
+        .unwrap_or(url);
+    rest.split('/').next().unwrap_or(rest)
 }
