@@ -406,6 +406,34 @@ mod tests {
     }
 
     #[test]
+    fn run_impl_reads_root_file_and_writes_project() {
+        let dir = tempfile::tempdir().unwrap();
+        init_git_repo(dir.path());
+        std::fs::write(
+            dir.path().join(project::SCOPE_FILE),
+            "type:\n  - name: Feat\nscopes:\n  - name: Core\n    docs: 核心\n",
+        )
+        .unwrap();
+
+        run_impl(
+            dir.path(),
+            &fake(r#"{"scopes": [{"name": "Core", "docs": "核心"}, {"name": "Pipeline", "docs": "管线"}]}"#),
+            false,
+        )
+        .unwrap();
+
+        let project_yaml = project::read_scope_yaml(dir.path()).unwrap();
+        assert_eq!(
+            project_yaml.scopes.iter().map(|s| s.name.as_str()).collect::<Vec<_>>(),
+            vec!["Core", "Pipeline"],
+            "读取根目录文件并合并后应写入 .project"
+        );
+        let root_content = std::fs::read_to_string(dir.path().join(project::SCOPE_FILE)).unwrap();
+        assert!(root_content.contains("Core"));
+        assert!(!root_content.contains("Pipeline"), "根目录原文件不应被修改");
+    }
+
+    #[test]
     fn run_impl_appends_new_scopes() {
         let dir = tempfile::tempdir().unwrap();
         init_git_repo(dir.path());

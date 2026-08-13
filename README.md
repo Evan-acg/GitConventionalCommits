@@ -124,9 +124,11 @@ agc config init [path] [--force]
 # 在当前目录初始化 git 仓库（已初始化则跳过），并生成 .project/.git-style-scope.yaml
 agc git init [--force]
 
-# 根据项目结构与 git 历史更新 .project/.git-style-scope.yaml（由 LLM 生成 scope 列表）
+# 根据项目结构与 git 历史更新 .git-style-scope.yaml（由 LLM 生成 scope 列表）
 agc git update [--prune] [--config-dir <目录>] [--api-key <key>]
 ```
+
+`.git-style-scope.yaml` 查找优先级（1 > 2 > 3）：`.project/` 目录 > 项目根目录 > 家目录；`update` 读取按此顺序，写入始终落在 `.project/`。
 
 - `--force`：覆盖已存在的 `.project/.git-style-scope.yaml`
 - `--prune`：删除已不在项目结构中的 scope（默认只增不删）
