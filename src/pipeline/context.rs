@@ -3,7 +3,7 @@ use crate::commit::Entry;
 /// 管线各阶段共享的上下文数据
 pub struct PipelineContext {
     // ── 控制参数 ──
-    pub auto_push: Option<String>,
+    pub auto_push: Option<(String, String)>,
     pub auto_commit: bool,
 
     // ── 第1阶段产出：DiffCollector ──
@@ -30,7 +30,7 @@ pub struct PipelineContext {
 }
 
 impl PipelineContext {
-    pub fn new(auto_push: Option<String>, auto_commit: bool) -> Self {
+    pub fn new(auto_push: Option<(String, String)>, auto_commit: bool) -> Self {
         Self {
             auto_push,
             auto_commit,

@@ -14,6 +14,5 @@ pub trait GitBackend: Send + Sync {
     fn stage_all(&self) -> anyhow::Result<()>;
     fn stage_files(&self, files: &[String]) -> anyhow::Result<()>;
     fn commit(&self, msg: &str) -> anyhow::Result<()>;
-    fn push(&self, remote: &str) -> anyhow::Result<()>;
-    fn pull(&self, remote: &str) -> anyhow::Result<()>;
+    fn push(&self, remote: &str, branch: &str) -> anyhow::Result<()>;
 }

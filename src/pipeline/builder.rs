@@ -16,7 +16,7 @@ pub struct PipelineBuilder {
     config: Option<Config>,
     rg_pattern: String,
     fd_pattern: String,
-    auto_push: Option<String>,
+    auto_push: Option<(String, String)>,
 }
 
 impl PipelineBuilder {
@@ -62,8 +62,8 @@ impl PipelineBuilder {
         self
     }
 
-    pub fn with_auto_push(mut self, remote: Option<String>) -> Self {
-        self.auto_push = remote;
+    pub fn with_auto_push(mut self, remote: String, branch: String) -> Self {
+        self.auto_push = Some((remote, branch));
         self
     }
 
@@ -93,8 +93,8 @@ impl PipelineBuilder {
             Box::new(CommitExecutor::new(Arc::clone(&git))),
         ];
 
-        if let Some(remote) = self.auto_push {
-            stages.push(Box::new(GitPusher::new(git, remote)));
+        if let Some((remote, branch)) = self.auto_push {
+            stages.push(Box::new(GitPusher::new(git, remote, branch)));
         }
 
         Ok(Pipeline::new(stages))

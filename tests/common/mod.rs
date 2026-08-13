@@ -1,3 +1,6 @@
+// 测试基建：部分 mock 仅在部分测试目标中构建使用
+#![allow(dead_code)]
+
 use agc::ai::{AiProvider, Request};
 use agc::commit::Entry;
 use agc::git::GitBackend;
@@ -16,6 +19,7 @@ pub struct MockGitBackend {
     pub untracked_content_result: Arc<Mutex<String>>,
     pub staged_files: Arc<Mutex<Vec<String>>>,
     pub committed_messages: Arc<Mutex<Vec<String>>>,
+    pub pushed_calls: Arc<Mutex<Vec<(String, String)>>>,
     pub stage_all_called: Arc<Mutex<bool>>,
 }
 
@@ -32,6 +36,7 @@ impl MockGitBackend {
             untracked_content_result: Arc::new(Mutex::new(String::new())),
             staged_files: Arc::new(Mutex::new(Vec::new())),
             committed_messages: Arc::new(Mutex::new(Vec::new())),
+            pushed_calls: Arc::new(Mutex::new(Vec::new())),
             stage_all_called: Arc::new(Mutex::new(false)),
         }
     }
@@ -77,10 +82,11 @@ impl GitBackend for MockGitBackend {
         cm.push(msg.to_string());
         Ok(())
     }
-    fn push(&self, _remote: &str) -> anyhow::Result<()> {
-        Ok(())
-    }
-    fn pull(&self, _remote: &str) -> anyhow::Result<()> {
+    fn push(&self, remote: &str, branch: &str) -> anyhow::Result<()> {
+        self.pushed_calls
+            .lock()
+            .unwrap()
+            .push((remote.to_string(), branch.to_string()));
         Ok(())
     }
 }

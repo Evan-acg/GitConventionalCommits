@@ -1,7 +1,7 @@
 mod common;
 
 use agc::commit::Entry;
-use agc::pipeline::stages::CommitExecutor;
+use agc::pipeline::stages::{CommitExecutor, GitPusher};
 use agc::pipeline::{PipelineContext, PipelineStage};
 use common::MockGitBackend;
 use std::sync::Arc;
@@ -47,4 +47,21 @@ fn auto_commit_commits_all_entries_in_loop() {
     executor.execute(&mut ctx).unwrap();
 
     assert_eq!(git.committed_messages.lock().unwrap().len(), 2);
+}
+
+#[test]
+fn push_pushes_remote_and_branch() {
+    let git = Arc::new(MockGitBackend::new());
+    let pusher = GitPusher::new(
+        Arc::clone(&git) as Arc<dyn agc::git::GitBackend>,
+        "origin".to_string(),
+        "master".to_string(),
+    );
+
+    let mut ctx = PipelineContext::new(Some(("origin".to_string(), "master".to_string())), true);
+    pusher.execute(&mut ctx).unwrap();
+
+    let calls = git.pushed_calls.lock().unwrap();
+    assert_eq!(calls.len(), 1);
+    assert_eq!(calls[0], ("origin".to_string(), "master".to_string()));
 }

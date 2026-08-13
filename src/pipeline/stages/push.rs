@@ -8,20 +8,22 @@ use crate::ui::spinner;
 pub struct GitPusher {
     git: Arc<dyn GitBackend>,
     remote: String,
+    branch: String,
 }
 
 impl GitPusher {
-    pub fn new(git: Arc<dyn GitBackend>, remote: String) -> Self {
-        Self { git, remote }
+    pub fn new(git: Arc<dyn GitBackend>, remote: String, branch: String) -> Self {
+        Self { git, remote, branch }
     }
 }
 
 impl PipelineStage for GitPusher {
     fn execute(&self, _ctx: &mut PipelineContext) -> anyhow::Result<()> {
-        spinner::run(&format!("正在执行 git push {}", self.remote), || {
-            self.git.push(&self.remote)
+        let target = format!("{} {}", self.remote, self.branch);
+        spinner::run(&format!("正在执行 git push {target}"), || {
+            self.git.push(&self.remote, &self.branch)
         })?;
-        println!("{}", color::green(&format!("git push {} 成功", self.remote)));
+        println!("{}", color::green(&format!("git push {target} 成功")));
         Ok(())
     }
 }

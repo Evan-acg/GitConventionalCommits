@@ -13,7 +13,7 @@
 - **目录历史与快速切换**：记录使用过的目录（LRU），支持模糊匹配与 fzf 选择
 - **OpenAI 兼容协议**：支持 DeepSeek、OpenAI 及任何 Chat Completions 兼容端点
 - **多配置源链式合并**：type/scope 与 AI 配置均支持多来源按优先级合并
-- **快速操作**：`--push` 提交后自动推送、`--pull` 仅拉取、`-y` 免确认提交
+- **快速操作**：`agc push` 指定目录提交并推送、`-y` 免确认提交
 - **交互提示**：彩色输出、spinner 加载动画、生成后可人工确认
 
 ## 工作原理
@@ -31,7 +31,7 @@ DiffCollector → ContextEnricher → AiGenerator → EntryParser → CommitExec
 | `AiGenerator` | 调用 AI 生成候选提交信息（spinner 提示） |
 | `EntryParser` | 解析 AI 返回的 JSON 响应 |
 | `CommitExecutor` | 执行 `git commit`（生成后人工确认） |
-| `GitPusher` | （可选，`--push` 时启用）执行 `git push` |
+| `GitPusher` | （可选，`push` 子命令时启用）执行 `git push <remote> <branch>` |
 
 ## 安装
 
@@ -81,27 +81,30 @@ notepad $env:USERPROFILE\.config\agc\default.yaml   # Windows
 agc
 ```
 
-运行流程：选择/记录目录 → 收集变更 → AI 生成提交信息 → 人工确认 → 提交。
+运行流程：记录当前目录 → 收集变更 → AI 生成提交信息 → 人工确认 → 提交。
 `-y` 可跳过确认直接提交：
 
 ```bash
-agc -y --push origin
+agc -y
+```
+
+指定目录并推送：
+
+```bash
+agc push -t rime -b master -r origin -y
 ```
 
 ## 命令行参数
 
 ```text
-Usage: agc [--push <push>] [--pull <pull>] [--skill-path <skill-path>]
-           [--api-key <api-key>] [--rg-pattern <rg-pattern>]
-           [--fd-pattern <fd-pattern>] [--lazygit-config <lazygit-config>]
-           [--config-dir <config-dir>] [-y] [<directory>] [<command>] [<args>]
+Usage: agc [--skill-path <skill-path>] [--api-key <api-key>]
+           [--rg-pattern <rg-pattern>] [--fd-pattern <fd-pattern>]
+           [--lazygit-config <lazygit-config>] [--config-dir <config-dir>]
+           [-y] [<command>] [<args>]
 ```
 
 | 参数 | 说明 |
 | --- | --- |
-| `<directory>` | 目录匹配模式，从历史记录中过滤（省略则在当前目录运行并记录） |
-| `--push <remote>` | 提交完成后执行 `git push`（如 `--push origin`） |
-| `--pull <remote>` | 仅执行 `git pull`，不进行 AI 提交 |
 | `--skill-path` | git-commit 技能文档 SKILL.md 路径 |
 | `--api-key` | API Key（优先级高于 `MESSAGE_API_KEY` 环境变量） |
 | `--rg-pattern` | rg 搜索模式，不指定则自动检测代码结构 |
@@ -119,6 +122,19 @@ agc config init [path] [--force]
 
 - `path`：配置目录（默认 `~/.config/agc`）
 - `--force`：覆盖已存在的配置文件
+
+```bash
+# 在指定目录执行 AI 提交流程，并推送到远程仓库
+agc push [-t <目录模式>] [-b <分支>] [-r <远程>] [-y]
+
+# 示例：在 RimeConfig 目录提交并推送到 origin master
+agc push -t rime -b master -r origin
+```
+
+- `-t, --target`：目录匹配模式，从历史记录中过滤（省略则在当前目录运行）
+- `-b, --branch`：推送分支（默认 `master`）
+- `-r, --remote`：远程仓库（默认 `origin`）
+- 其余选项（`--config-dir`、`--api-key`、`-y` 等）与顶层一致
 
 ```bash
 # 在当前目录初始化 git 仓库（已初始化则跳过），并生成 .project/.git-style-scope.yaml
@@ -187,7 +203,7 @@ API Key 最终优先级：`--api-key` > 配置文件 > `MESSAGE_API_KEY` 环境�
 `agc` 会记录使用过的目录，按 LRU（最近使用）排序：
 
 - 存储位置：XDG 规范路径 `~/.local/share/agc/history`，回退 `~/.agc_history`
-- 传入 `<directory>` 参数时按子串模糊匹配（大小写不敏感）
+- `push` 子命令传入 `-t <模式>` 时按子串模糊匹配（大小写不敏感）
 - 匹配多个目录时优先用 `fzf` 选择，未安装则回退为序号输入
 
 ## 测试
