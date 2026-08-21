@@ -6,7 +6,7 @@ pub struct RealGit;
 
 impl GitBackend for RealGit {
     fn diff(&self) -> anyhow::Result<String> {
-        let out = Command::new("git").args(["diff"]).output()?;
+        let out = Command::new("git").args(["diff", "HEAD"]).output()?;
         if !out.status.success() {
             anyhow::bail!("git diff 失败");
         }
@@ -14,7 +14,9 @@ impl GitBackend for RealGit {
     }
 
     fn changed_files(&self) -> anyhow::Result<Vec<String>> {
-        let out = Command::new("git").args(["diff", "--name-only"]).output()?;
+        let out = Command::new("git")
+            .args(["diff", "HEAD", "--name-only"])
+            .output()?;
         if !out.status.success() {
             anyhow::bail!("git diff --name-only 失败");
         }
