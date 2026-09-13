@@ -1,7 +1,28 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 pub mod executor;
 pub mod service;
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum Detail {
+    Text(String),
+    Lines(Vec<String>),
+}
+
+fn deserialize_detail<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    match Detail::deserialize(deserializer)? {
+        Detail::Text(detail) => Ok(detail),
+        Detail::Lines(lines) => Ok(lines
+            .into_iter()
+            .map(|line| format!("- {line}"))
+            .collect::<Vec<_>>()
+            .join("\n")),
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Entry {
@@ -11,7 +32,7 @@ pub struct Entry {
     pub message: String,
     #[serde(default)]
     pub files: Vec<String>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_detail")]
     pub detail: String,
 }
 

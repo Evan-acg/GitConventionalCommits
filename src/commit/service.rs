@@ -48,7 +48,9 @@ pub fn parse_entries(raw: &str) -> (Vec<Entry>, String) {
         if skipped > 0 {
             eprintln!(
                 "{}",
-                crate::ui::color::yellow(&format!("警告: AI 返回的 {skipped} 个 entry 缺少必要字段（type/scope/message），已跳过"))
+                crate::ui::color::yellow(&format!(
+                    "警告: AI 返回的 {skipped} 个 entry 缺少必要字段（type/scope/message），已跳过"
+                ))
             );
         }
         return (valid, reason);
@@ -78,7 +80,9 @@ pub fn parse_entries(raw: &str) -> (Vec<Entry>, String) {
         Err(e) => {
             eprintln!(
                 "{}",
-                crate::ui::color::yellow(&format!("警告: AI 返回内容无法解析为合法 JSON，解析错误: {e}"))
+                crate::ui::color::yellow(&format!(
+                    "警告: AI 返回内容不是合法 JSON，或字段类型不符合约定，解析错误: {e}"
+                ))
             );
             (vec![], String::new())
         }

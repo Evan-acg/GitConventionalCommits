@@ -85,25 +85,22 @@ async fn when_run_workflow(world: &mut AgcWorld) {
     }
 
     let ai_raw = world.mock_ai.generate_result.lock().unwrap().clone();
-    let (mut entries, _reason) = commit::service::parse_entries(&ai_raw);
+    let total_entries = serde_json::from_str::<serde_json::Value>(&ai_raw)
+        .ok()
+        .and_then(|response| response["data"].as_array().map(Vec::len))
+        .unwrap_or_default();
+    let (entries, _reason) = commit::service::parse_entries(&ai_raw);
 
     if entries.is_empty() {
         world.workflow_output.push("AI 未生成有效 commit 消息".to_string());
         return;
     }
 
-    entries.retain(|e| {
-        if e.entry_type.is_empty() || e.scope.is_empty() || e.message.is_empty() {
-            world.workflow_output.push("警告: AI 返回的 entry 缺少必要字段，已跳过".to_string());
-            false
-        } else {
-            true
-        }
-    });
-
-    if entries.is_empty() {
-        world.workflow_output.push("AI 未生成有效 commit 消息".to_string());
-        return;
+    let skipped = total_entries.saturating_sub(entries.len());
+    if skipped > 0 {
+        world.workflow_output.push(format!(
+            "警告: AI 返回的 {skipped} 个 entry 缺少必要字段，已跳过"
+        ));
     }
 
     for entry in &entries {

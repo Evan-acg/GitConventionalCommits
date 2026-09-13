@@ -35,7 +35,7 @@ impl PromptBuilder {
   - scope: 变更范围 (必填，从可用 Scope 中选择；若未列出合适项，可自行推断)
   - message: 中文描述 (一句话概括变更内容)
   - files: 该 commit 涉及的文件路径数组 (需要 git add 的文件)
-  - detail: 变更的详细描述 (markdown 列表格式，以 - 开头列出每个具体变更)
+  - detail: 变更的详细描述（JSON 字符串，不是数组；使用 \n 分隔 markdown 列表，每项以 - 开头）
 
 规则:
 - 根据 diff 内容选择最匹配的 Type 和 Scope

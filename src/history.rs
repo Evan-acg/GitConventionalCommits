@@ -19,7 +19,7 @@ impl History {
             match fs::File::open(&file_path) {
                 Ok(file) => BufReader::new(file)
                     .lines()
-                    .filter_map(|line| line.ok())
+                    .map_while(Result::ok)
                     .filter(|line| !line.is_empty())
                     .collect(),
                 Err(_) => Vec::new(),
