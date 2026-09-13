@@ -20,7 +20,7 @@ struct ChatMessage {
 struct ChatRequest {
     model: String,
     messages: Vec<ChatMessage>,
-    reasning_effort: String,
+    reasoning_effort: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     response_format: Option<serde_json::Value>,
 }
@@ -60,6 +60,7 @@ impl OpenAI {
             base_url: config.base_url,
             agent: Config::builder()
                 .timeout_global(Some(Duration::from_secs(120)))
+                .http_status_as_error(false)
                 .tls_config(
                     TlsConfig::builder()
                         .provider(TlsProvider::NativeTls)
@@ -77,7 +78,9 @@ impl OpenAI {
     /// 供 ProviderRegistry 注册的工厂函数
     pub fn create(config: AiConfig) -> anyhow::Result<Arc<dyn AiProvider>> {
         if config.api_key.as_deref().unwrap_or("").is_empty() {
-            anyhow::bail!("openai provider 缺少 api_key，请在配置文件或 MESSAGE_API_KEY 环境变量中设置");
+            anyhow::bail!(
+                "openai provider 缺少 api_key，请在配置文件或 MESSAGE_API_KEY 环境变量中设置"
+            );
         }
         Ok(Arc::new(Self::new(config)))
     }
@@ -117,7 +120,7 @@ impl OpenAI {
         let chat_req = ChatRequest {
             model: self.model.clone(),
             messages,
-            reasning_effort: "low".to_string(),
+            reasoning_effort: "low".to_string(),
             response_format: Some(json!({"type": "json_object"})),
         };
 
@@ -131,7 +134,11 @@ impl OpenAI {
             .content_type("application/json")
             .send(&body)?;
 
+        let status = resp.status();
         let body_text = resp.body_mut().read_to_string()?;
+        if !status.is_success() {
+            anyhow::bail!("API 请求失败（HTTP {status}）: {body_text}");
+        }
         let chat_resp: ChatResponse = serde_json::from_str(&body_text)?;
 
         if chat_resp.choices.is_empty() {
@@ -142,5 +149,28 @@ impl OpenAI {
         }
 
         Ok(chat_resp.choices[0].message.content.trim().to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ChatRequest;
+
+    // Given a chat completion request
+    // When it is serialized for an OpenAI-compatible API
+    // Then it uses the documented reasoning_effort field
+    #[test]
+    fn serializes_reasoning_effort() {
+        let request = ChatRequest {
+            model: "deepseek-flash".to_string(),
+            messages: vec![],
+            reasoning_effort: "low".to_string(),
+            response_format: None,
+        };
+
+        let body = serde_json::to_value(request).unwrap();
+
+        assert_eq!(body["reasoning_effort"], "low");
+        assert!(body.get("reasning_effort").is_none());
     }
 }
